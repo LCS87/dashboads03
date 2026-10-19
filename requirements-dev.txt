@@ -1,0 +1,4 @@
+# Dependências de desenvolvimento (testes e qualidade)
+# Instalação:  pip install -r requirements-dev.txt
+-r requirements.txt
+pytest>=8.0

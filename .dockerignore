@@ -1,0 +1,35 @@
+# ===== Controle de versão / IDE =====
+.git
+.gitattributes
+.gitignore
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ===== Testes e documentação (não vão para produção) =====
+tests/
+*.md
+pytest.ini
+requirements-dev.txt
+
+# ===== Artefatos gerados em runtime =====
+logs/
+*.log
+relatorio_teste.*
+parque_suspenso_export_*.csv
+relatorio_parque_suspenso_*.pdf
+docker-compose*.yml
+Dockerfile
+.dockerignore

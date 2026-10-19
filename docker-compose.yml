@@ -1,0 +1,49 @@
+# ============================================================
+#  Cockpit Executivo — Parque Suspenso
+#  Subida:  docker compose up -d --build
+#  Acesso:  http://localhost:8503
+# ============================================================
+services:
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    image: parque-suspenso:latest
+    container_name: parque-suspenso
+    ports:
+      # host:container — troque a porta da esquerda se 8503 estiver ocupada
+      - "8503:8503"
+    volumes:
+      # O app é baseado em arquivos: monte o diretório para persistir
+      # base tratada, acoes_recuperacao.csv e logs entre reinícios.
+      - ./:/app
+    environment:
+      TZ: America/Sao_Paulo
+      STREAMLIT_SERVER_HEADLESS: "true"
+      STREAMLIT_BROWSER_GATHER_USAGE_STATS: "false"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8503/_stcore/health', timeout=4).status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 25s
+      retries: 3
+
+  # ------------------------------------------------------------------
+  # Perfil de testes: docker compose run --rm testes
+  # Executa a suíte pytest dentro da imagem (usa o volume do projeto).
+  # ------------------------------------------------------------------
+  testes:
+    profiles: ["testes"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test
+    image: parque-suspenso:teste
+    entrypoint: []
+    command: ["python", "-m", "pytest", "-q", "-m", "not ui"]
+    volumes:
+      - ./:/app
+    environment:
+      TZ: America/Sao_Paulo

@@ -1,0 +1,32 @@
+# ===== Segurança / Segredos =====
+# Nunca versione credenciais. Se precisar de variáveis de ambiente, use .env
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+*.key
+*.pem
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ===== Logs e artefatos gerados =====
+logs/
+*.log
+relatorio_teste.*
+parque_suspenso_export_*.csv
+relatorio_parque_suspenso_*.pdf
+
+# ===== Sistema operacional / IDE =====
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
