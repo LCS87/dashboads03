@@ -18,6 +18,10 @@ env/
 .coverage
 htmlcov/
 
+# ===== Planos e Análises (locais) =====
+PLANO_DE_ACAO_E_STATUS.md
+ANALISE_E_PLANO_DE_MELHORIAS.md
+
 # ===== Logs e artefatos gerados =====
 logs/
 *.log

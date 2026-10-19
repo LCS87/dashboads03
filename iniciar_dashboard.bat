@@ -29,6 +29,14 @@ if not exist "parque_suspenso_tratado.parquet" (
 )
 echo.
 
-echo Iniciando aplicacao Streamlit...
-python -m streamlit run app.py --server.port 8503
+echo Modo de execucao: %1
+if "%1"=="service" (
+    echo Iniciando como servico Windows...
+    echo Use o Gerenciador de Servicos (services.msc) ou:
+    echo   net start parque-suspenso
+    python -m streamlit run app.py --server.port 8503 --server.headless true --server.runnerType=edgece
+) else (
+    echo Iniciando aplicacao Streamlit...
+    python -m streamlit run app.py --server.port 8503
+)
 pause
