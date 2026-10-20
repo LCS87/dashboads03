@@ -107,20 +107,19 @@ class TestTema:
     """A paleta deve estar centralizada e ser consistente entre os artefatos."""
 
     def test_paleta_com_valores_definidos(self):
-        assert tema.PRETO_CARVAO == "#0D0D0D"
-        assert tema.BORDO_ESCURO == "#1A0A0A"
-        assert tema.VERMELHO_SANGUE == "#8B0000"
-        assert tema.DOURADO_ENVELHECIDO == "#B8860B"
-        assert tema.PERGAMINHO == "#E8DCC8"
-        assert tema.CINZA_FERRUGEM == "#8B7D6B"
-        assert tema.CARMESIM == "#DC143C"
-        assert tema.VERDE_MUSGO == "#2E4A2E"
+        assert tema.GRAFITE == "#111111"
+        assert tema.CHUMBO == "#1C1C1E"
+        assert tema.LARANJA_FERRUGEM == "#CC5500"
+        assert tema.CIANO_ENFERRUJADO == "#008B8B"
+        assert tema.BRANCO_SUJO == "#D4D4D4"
+        assert tema.VERMELHO_OXIDO == "#B22222"
+        assert tema.VERDE_PETROLEO == "#006D5B"
 
     def test_todas_as_cores_sao_hex_validos(self):
         cores = [
-            tema.PRETO_CARVAO, tema.BORDO_ESCURO, tema.VERMELHO_SANGUE,
-            tema.DOURADO_ENVELHECIDO, tema.PERGAMINHO, tema.CINZA_FERRUGEM,
-            tema.CARMESIM, tema.VERDE_MUSGO,
+            tema.GRAFITE, tema.CHUMBO, tema.LARANJA_FERRUGEM,
+            tema.CIANO_ENFERRUJADO, tema.BRANCO_SUJO, tema.VERMELHO_OXIDO,
+            tema.VERDE_PETROLEO,
         ]
         for cor in cores:
             assert re.fullmatch(r"#[0-9A-Fa-f]{6}", cor), cor
@@ -183,14 +182,18 @@ class TestTema:
             assert t.positivo in css
 
     def test_config_toml_do_streamlit_usa_a_paleta(self, projeto_dir):
+        """O config.toml é o tema base do Streamlit (lido na partida).
+
+        Ele carrega a **paleta da marca**; as variantes com contraste mais alto
+        são aplicadas em tempo de execução pelo CSS do tema.
+        """
         import os
         caminho = os.path.join(projeto_dir, ".streamlit", "config.toml")
         if not os.path.exists(caminho):
             pytest.skip("config.toml ausente")
         with open(caminho, encoding="utf-8") as fh:
             conteudo = fh.read()
-        for cor in (tema.TEMA_ESCURO.primario, tema.TEMA_ESCURO.fundo,
-                    tema.TEMA_ESCURO.card, tema.TEMA_ESCURO.texto):
+        for cor in (tema.GRAFITE, tema.CHUMBO, tema.BRANCO_SUJO, tema.LARANJA_FERRUGEM):
             assert cor in conteudo, f"{cor} ausente do config.toml"
 
 
@@ -253,14 +256,21 @@ class TestAcessibilidade:
     def test_paleta_da_marca_nao_e_usada_como_texto_sem_ajuste(self, nome_tema):
         """As cores puras da marca nao podem ser usadas como texto no tema escuro.
 
-        Vermelho sangue e verde musgo sao escuros demais sobre fundo escuro; o
-        tema deve usar as variantes clareadas.
+        Laranja ferrugem, oxido e verde petroleo sao escuros demais sobre fundo
+        escuro; o tema deve usar as variantes clareadas.
         """
         t = tema.obter_tema(nome_tema)
         if nome_tema == "escuro":
-            assert t.alerta != tema.CARMESIM, "carmesim puro nao serve como texto no escuro"
-            assert t.positivo != tema.VERDE_MUSGO, "musgo puro nao serve como texto no escuro"
-            assert t.perigo != tema.VERMELHO_SANGUE, "sangue puro nao serve como texto no escuro"
+            assert t.alerta != tema.VERMELHO_OXIDO, "oxido puro nao serve como texto no escuro"
+            assert t.positivo != tema.VERDE_PETROLEO, "petroleo puro nao serve como texto no escuro"
+            assert t.acento != tema.LARANJA_FERRUGEM, "ferrugem pura nao serve como texto no escuro"
+
+    @pytest.mark.parametrize("nome_tema", ["escuro", "claro"])
+    def test_botao_primario_tem_contraste_com_texto_branco(self, nome_tema):
+        """O botao primario precisa de 4,5:1 com o texto branco que recebe."""
+        t = tema.obter_tema(nome_tema)
+        razao = tema.contraste(t.cor_texto_sobre_primario, t.primario)
+        assert razao >= 4.5, f"[{nome_tema}] botao primario: {razao:.2f}:1"
 
     def test_paleta_do_pdf_contrasta_com_papel(self):
         """O relatorio e impresso: os textos precisam contraste sobre papel."""

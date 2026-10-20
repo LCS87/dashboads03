@@ -5,6 +5,20 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ## [Não publicado]
 
+### Documentação — README atualizado com a paleta Noir Industrial e novas capturas
+- **Preview reescrito**: nova faixa de **amostras de cor** (swatches) com as 7 cores da
+  paleta Noir Industrial, galeria de telas e bloco comparando os **dois temas**
+  (Noir Industrial escuro × Concreto claro).
+- **Nova captura `assets/img11_claro.png`**: o Cockpit no tema claro, incluída na galeria
+  do Preview e na nova **seção 7.9 — Tema Concreto (claro)**.
+- As **10 capturas existentes foram regeneradas** a partir da aplicação em execução com
+  a paleta Noir Industrial (anteriores mostravam o tema anterior).
+- **Seção 3.14** (Tema visual e acessibilidade) reescrita com a paleta Noir Industrial,
+  a tabela de contraste corrigida e o critério de distinção perceptual (ΔE ≥ 19).
+- Cabeçalho do README agora identifica a paleta em uso; sumário ajustado.
+- Verificação: 0 links internos quebrados, 0 tabelas desalinhadas, 11/11 capturas
+  presentes e referenciadas, 0 resíduos da paleta anterior.
+
 ### Corrigido — Porta 8503 ocupada e inicialização resiliente
 - `iniciar_dashboard.bat` agora **detecta a porta ocupada**, identifica o PID que a
   segura, **encerra a instância anterior** e segue — o script de 1 clique não falha
@@ -27,42 +41,57 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
   **numpy 2.4.6** · **plotly 7.1.0** · pyarrow 26 · reportlab 5.0.1): **173/173 testes
   passando** e dashboard renderizando corretamente.
 
-### Adicionado — Tema Gótico Vitoriano e Tema Pergaminho (claro)
+### Adicionado — Tema Noir Industrial e Tema Concreto (claro)
 - **Novo módulo [`tema.py`](tema.py)**: fonte única de verdade das cores, dos temas, do
   CSS dinâmico e do template Plotly. Nenhuma cor está mais hard-coded no `app.py`.
 - **Dois temas de exibição**, alternáveis **em tempo de execução** na sidebar
   (`🎨 Tema de exibição`), sem reiniciar o servidor:
-  - 🌙 **Gótico Vitoriano (escuro)** — preto carvão, bordô escuro, vermelho sangue,
-    dourado envelhecido, pergaminho, cinza ferrugem, carmesim, verde musgo;
-  - ☀️ **Pergaminho (claro)** — papel envelhecido, tinta sepia, ouro escuro, sangue.
-- **Rampas sequenciais vitorianas** substituem as escalas padrão do Plotly
+  - 🌙 **Noir Industrial (escuro)** — grafite `#111111`, cinza chumbo `#1C1C1E`, laranja
+    ferrugem `#CC5500`, ciano enferrujado `#008B8B`, branco sujo `#D4D4D4`, vermelho
+    óxido `#B22222`, verde petróleo `#006D5B`;
+  - ☀️ **Concreto (claro)** — concreto `#F2F2F0`, branco `#FFFFFF`, tinta grafite
+    `#1A1A1C`, com os mesmos matizes escurecidos para contraste em papel.
+- **Rampas sequenciais industriais** substituem as escalas padrão do Plotly
   (`Blues`, `Teal`, `RdBu_r`, `Reds`, `Blugrn`, `Bluyl`), que introduciam azuis
   destoantes da identidade visual — a aba *Inteligência Geográfica* é o caso mais
   evidente.
-- **Tipografia vitoriana**: títulos em `Playfair Display` (serifa), corpo em
-  `Plus Jakarta Sans`.
+- **Tipografia**: títulos em `Playfair Display` (serifa), corpo em `Plus Jakarta Sans`.
 - `relatorio_pdf.py` recebe o tema ativo e usa uma **paleta de papel** própria
   (sempre impressa em fundo claro, com contraste AA).
 - `app_data.pdf_do_recorte()` e `gerar_pdf()` passaram a aceitar o tema.
 - Capturas do README (`assets/img01..img10`) **regeneradas** com o novo tema.
 
-### Corrigido — Auditoria de acessibilidade (WCAG 2.1)
-A paleta original do briefing falhava em 12 pares de cor realmente usados. Medição
+### Corrigido — Campos de entrada escuros no tema claro
+O Streamlit aplica a cor de fundo do tema base em um `div` interno de cada controle
+(`role="group"`). Os campos de entrada (selectbox, multiselect, texto e número)
+ficavam **escuros mesmo no tema claro**. Corrigido com regras CSS sobre os seletores
+estáveis (`[data-testid="stSelectbox"] > div > div[role="group"]`,
+`[data-testid="stTextInputRootElement"]`, `[data-testid="stNumberInputContainer"]`…),
+além do `input` interno, do placeholder e dos ícones. Verificado no DOM: **0
+elementos escuros remanescentes** na sidebar.
+
+### Corrigido — Auditoria de acessibilidade (WCAG 2.1) da paleta Noir Industrial
+A paleta do briefing, aplicada literalmente, falhava em pontos críticos. Medição
 objetiva das razões de contraste e correções:
 
-| Uso | Antes | Agora |
-|---|---:|---:|
-| Verde musgo como **texto** (`.delta-negative`) | 1,96:1 | **4,50:1** |
-| Vermelho sangue como **texto** (faixa extrema) | 1,92:1 | **4,58:1** |
-| Carmesim como **texto** (`.delta-positive`) | 3,85:1 | **4,51:1** |
-| Verde musgo como **borda/barra** | 1,96:1 | **4,50:1** |
-| Ouro no PDF sobre branco | 3,25:1 | **4,69:1** |
-| Cinza ferrugem no PDF sobre branco | 4,00:1 | **4,55:1** |
+| Uso | Paleta pura | Correção | Resultado |
+|---|---:|---|---:|
+| Vermelho óxido como **texto** (faixa extrema) | 2,55:1 | variante `#DF5555` | **4,51:1** |
+| Verde petróleo como **texto** (`.delta-negative`) | 2,70:1 | variante `#00957C` | **4,53:1** |
+| Verde petróleo como **borda/barra** | 2,70:1 | variante `#00957C` | **4,53:1** |
+| Laranja ferrugem como **texto** | 3,94:1 | variante `#DC5C00` | **4,52:1** |
+| Branco sobre o **botão primário** | 4,31:1 | laranja `#C75300` | **4,50:1** |
+| Laranja ferrugem no **tema claro** (sobre papel) | 3,85:1 | laranja `#BA4D00` | **4,52:1** |
+| Cinza do PDF sobre branco | 4,00:1 | `#5A5A5E` | **6,12:1** |
 
 A regra adotada preserva a **paleta da marca** para preenchimento/borda/acento e usa
 **variantes de mesmo matiz e saturação** (apenas a luminosidade muda) quando a cor
-vira texto sobre fundo escuro. Todos os contrastes passam a ser **verificados por
-teste automatizado**.
+vira texto sobre fundo escuro. O botão primário é a única exceção: usa um laranja
+ligeiramente mais escuro para o texto branco atingir 4,5:1. Todos os contrastes passam a
+ser **verificados por teste automatizado**.
+
+Além disso, as faixas vizinhas do donut de aging foram reescalonadas para garantir
+**distinção perceptual (ΔE ≥ 19 em CIE76)**, e não apenas contraste de luminância.
 
 ### Corrigido — Botão do WhatsApp renderizava como texto
 O cartão de acionamento da aba ⚡ Régua de Cobrança aparecia com a tag
@@ -76,7 +105,7 @@ cartão inteiro era interpretado como código. Correções:
 
 ### Corrigido — Navegação com item ativo ilegível
 O Streamlit usa `primaryColor` como **cor do texto** do `pill` selecionado. Com o
-vermelho sangue sobre o gradiente vermelho, o item ativo ficava em **1,9:1**.
+acento primário sobre o gradiente da mesma cor, o item ativo ficava em **1,9:1**.
 Corrigido com regra CSS sobre `[data-testid="stButtonGroup"] button[data-selected]`.
 
 ### Corrigido — Eixos e legendas dos gráficos com a cor padrão do Plotly

@@ -180,8 +180,8 @@ def test_tema_claro_e_aplicado_sem_excecao(at):
 
     # o CSS aplicado deve conter as cores do tema claro
     css = " ".join(md.value for md in at.markdown)
-    assert "#F3EBDC" in css, "fundo do tema claro ausente no CSS"
-    assert "#2A1E14" in css, "texto do tema claro ausente no CSS"
+    assert "#F2F2F0" in css, "fundo do tema claro ausente no CSS"
+    assert "#1A1A1C" in css, "texto do tema claro ausente no CSS"
 
     # volta para o tema escuro
     _seletor_tema(at).set_value("escuro").run()

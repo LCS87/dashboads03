@@ -49,7 +49,7 @@ with st.sidebar:
         format_func=lambda n: f"{TEMAS[n].emoji}  {TEMAS[n].rotulo}",
         selection_mode="single",
         key="tema_pills",
-        help="Alterna entre o tema Gótico Vitoriano (escuro) e o tema Pergaminho (claro).",
+        help="Alterna entre o tema Noir Industrial (escuro) e o tema Concreto (claro).",
     )
     st.session_state["tema_nome"] = _escolha if _escolha in TEMAS else TEMA_ESCURO.nome
 

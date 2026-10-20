@@ -1,11 +1,11 @@
-# Tema Gótico Vitoriano — tema central do dashboard
+# Tema Noir Industrial — tema central do dashboard
 # Paleta definida em tema.py (fonte única de verdade).
 [theme]
 base = "dark"
-primaryColor = "#8B0000"           # Acento primário — vermelho sangue
-backgroundColor = "#0D0D0D"        # Background principal — preto carvão
-secondaryBackgroundColor = "#1A0A0A"  # Cards / Sidebar — bordô escuro
-textColor = "#E8DCC8"              # Texto principal — pergaminho
+primaryColor = "#CC5500"           # Acento primário — laranja ferrugem
+backgroundColor = "#111111"        # Background principal — grafite
+secondaryBackgroundColor = "#1C1C1E"  # Cards / Sidebar — cinza chumbo
+textColor = "#D4D4D4"              # Texto principal — branco sujo
 font = "sans serif"
 
 [server]

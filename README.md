@@ -13,12 +13,33 @@
 
 **Base analisada:** Janeiro a Maio de 2026 · **2.061 linhas** · **821 clientes** · **15 UFs**
 **Última atualização:** 19/10/2026 — Rodada 13 (CI/CD, serviço Windows, base de origem limpa)
+**Identidade visual:** Noir Industrial (`#111111` · `#CC5500` · `#008B8B` · `#B22222` · `#006D5B`) — 2 temas, WCAG AA
 
 ---
 
 <a id="preview"></a>
 
 ## 🖼️ Preview
+
+### Paleta Noir Industrial
+
+<table>
+<tr>
+<td align="center" width="14%"><img src="https://img.shields.io/badge/fundo-%23111111-111111?style=flat-square&labelColor=111111" alt="Grafite"><br><sub><b>Grafite</b><br><code>#111111</code></sub></td>
+<td align="center" width="14%"><img src="https://img.shields.io/badge/card-%231C1C1E-1C1C1E?style=flat-square&labelColor=1C1C1E" alt="Cinza chumbo"><br><sub><b>Cinza chumbo</b><br><code>#1C1C1E</code></sub></td>
+<td align="center" width="14%"><img src="https://img.shields.io/badge/acento-%23CC5500-CC5500?style=flat-square&labelColor=111111" alt="Laranja ferrugem"><br><sub><b>Laranja ferrugem</b><br><code>#CC5500</code></sub></td>
+<td align="center" width="14%"><img src="https://img.shields.io/badge/acento-%23008B8B-008B8B?style=flat-square&labelColor=111111" alt="Ciano enferrujado"><br><sub><b>Ciano enferrujado</b><br><code>#008B8B</code></sub></td>
+<td align="center" width="14%"><img src="https://img.shields.io/badge/texto-%23D4D4D4-D4D4D4?style=flat-square&labelColor=111111" alt="Branco sujo"><br><sub><b>Branco sujo</b><br><code>#D4D4D4</code></sub></td>
+<td align="center" width="14%"><img src="https://img.shields.io/badge/alerta-%23B22222-B22222?style=flat-square&labelColor=111111" alt="Vermelho óxido"><br><sub><b>Vermelho óxido</b><br><code>#B22222</code></sub></td>
+<td align="center" width="14%"><img src="https://img.shields.io/badge/sucesso-%23006D5B-006D5B?style=flat-square&labelColor=111111" alt="Verde petróleo"><br><sub><b>Verde petróleo</b><br><code>#006D5B</code></sub></td>
+</tr>
+</table>
+
+> A paleta é definida em um único lugar ([`tema.py`](tema.py)) e todos os contrastes são
+> **verificados por teste automatizado** contra a WCAG 2.1. Detalhes em
+> [3.14 Tema visual e acessibilidade](#314-tema-visual-e-acessibilidade-wcag-21).
+
+### Telas
 
 <table>
 <tr>
@@ -35,6 +56,18 @@
 </tr>
 </table>
 
+### Dois temas, alternáveis na sidebar
+
+<table>
+<tr>
+<td width="50%"><img src="assets/img01.png" alt="Tema Noir Industrial escuro"><br><sub>🌙 <b>Noir Industrial (escuro)</b> — grafite, cinza chumbo e laranja ferrugem</sub></td>
+<td width="50%"><img src="assets/img11_claro.png" alt="Tema Concreto claro"><br><sub>☀️ <b>Concreto (claro)</b> — os mesmos matizes sobre papel</sub></td>
+</tr>
+</table>
+
+> A troca vale **imediatamente**, sem reiniciar o servidor: o seletor fica no topo da
+> barra lateral (`🎨 Tema de exibição`).
+
 > Todas as telas em tamanho real estão na [Seção 7 — Painéis](#sec-7).
 
 ---
@@ -43,7 +76,7 @@
 
 | # | Seção | O que você encontra |
 |:--:|---|---|
-| ★ | [🖼️ Preview](#preview) | Galeria das telas principais do dashboard |
+| ★ | [🖼️ Preview](#preview) | Paleta Noir Industrial, galeria de telas e os dois temas |
 | 1 | [Visão Geral](#sec-1) | Problema, objetivos, escopo e glossário |
 | 2 | [Status Atual](#sec-2) | Números verificados da base e do projeto |
 | 3 | [🧪 Metodologia](#sec-3) | Método completo: coleta → ETL → validação → métricas → modelo → alertas |
@@ -732,59 +765,61 @@ O tema vive **exclusivamente** em [`tema.py`](tema.py) — nenhuma cor está har
 `app.py`. Trocar ou recalibrar a identidade visual é, portanto, uma alteração em um
 único lugar.
 
-#### 3.14.1 Paleta da marca
+#### 3.14.1 Paleta da marca — Noir Industrial
 
 | Elemento | Cor | Hex | Uso |
 |---|---|---|---|
-| Background principal | Preto carvão | `#0D0D0D` | Fundo da aplicação |
-| Cards / Sidebar | Bordô escuro | `#1A0A0A` | Cartões e barra lateral |
-| Acento primário | Vermelho sangue | `#8B0000` | Botões, gradiente do título, status de inadimplência |
-| Acento secundário | Dourado envelhecido | `#B8860B` | Títulos, rótulos, bordas de destaque |
-| Texto principal | Pergaminho | `#E8DCC8` | Títulos e valores |
-| Texto secundário | Cinza ferrugem | `#8B7D6B` | Rótulos e legendas |
-| Alerta / risco | Carmesim | `#DC143C` | Alertas críticos, aging > 60 dias |
-| Sucesso / positivo | Verde musgo | `#2E4A2E` | Alertas positivos, aging 0–30 dias |
+| Background principal | Grafite | `#111111` | Fundo da aplicação |
+| Cards / Sidebar | Cinza chumbo | `#1C1C1E` | Cartões e barra lateral |
+| Acento primário | Laranja ferrugem | `#CC5500` | Botões, gradiente do título, status de inadimplência |
+| Acento secundário | Ciano enferrujado | `#008B8B` | Séries de gráficos, rótulos de apoio |
+| Texto principal | Branco sujo | `#D4D4D4` | Títulos e valores |
+| Alerta / risco | Vermelho óxido | `#B22222` | Alertas críticos, aging > 60 dias |
+| Sucesso / positivo | Verde petróleo | `#006D5B` | Alertas positivos, aging 0–30 dias |
 
 #### 3.14.2 Dois temas, uma identidade
 
-| | 🌙 Gótico Vitoriano (escuro) | ☀️ Pergaminho (claro) |
+| | 🌙 Noir Industrial (escuro) | ☀️ Concreto (claro) |
 |---|---|---|
-| Fundo | Preto carvão `#0D0D0D` | Papel envelhecido `#F3EBDC` |
-| Card | Bordô escuro `#1A0A0A` | Marfim `#FCF8EF` |
-| Texto | Pergaminho `#E8DCC8` | Tinta sepia `#2A1E14` |
-| Acento | Dourado `#B8860B` | Ouro escuro `#876207` |
-| Rampa sequencial | `#45211F → #8B0000 → #D4AF37` | `#E5D8B6 → #B8860B → #5C0011` |
+| Fundo | Grafite `#111111` | Concreto `#F2F2F0` |
+| Card | Cinza chumbo `#1C1C1E` | Branco `#FFFFFF` |
+| Texto | Branco sujo `#D4D4D4` | Tinta grafite `#1A1A1C` |
+| Acento | Laranja `#DC5C00` | Laranja escurecida `#BA4D00` |
+| Rampa sequencial | `#4A2C1A → #7A3200 → #B85A1E → #E8763A → #F0A05A` | `#EADFD2 → #D08A4A → #CC5500 → #8A3A00 → #4A2000` |
 | Ideal para | Sala de controle, apresentação noturna, projeção | Impressão, relatório, ambientes claros |
 
 A troca é feita na **sidebar** (`🎨 Tema de exibição`) e vale **imediatamente**, sem
 reiniciar o servidor — o CSS é regenerado a cada rerun e os gráficos Plotly recebem as
 cores do tema ativo.
 
-> **Rampas sequenciais vitorianas:** substituem as escalas padrão do Plotly
-> (`Blues`, `Teal`, `RdBu_r`, `Reds`, `Blugrn`, `Bluyl`), que introduziam azuis
-> destoantes da identidade visual. A rampa é **monotônica em luminância**, o que
-> preserva a leitura ordinal da escala.
+> **Rampas sequenciais industriais:** substituem as escalas padrão do Plotly
+> (`Blues`, `Teal`, `RdBu_r`, `Reds`, `Blugrn`, `Bluyl`), que introduciam azuis
+> destoantes da identidade visual. A rampa é **monotônica em luminância** (o que
+> preserva a leitura ordinal da escala) e as faixas vizinhas do donut são separadas
+> por **ΔE ≥ 19 em CIE76** (distinção perceptual, não apenas luminância).
 
 #### 3.14.3 Acessibilidade: o que foi corrigido
 
-A paleta original do briefing falhava em pontos críticos. A auditoria mediu **todos** os
-pares de cor realmente usados na interface:
+A paleta do briefing, aplicada literally, falhava em pontos críticos. A auditoria mediu
+**todos** os pares de cor realmente usados na interface:
 
-| Par (uso real) | Antes | Correção | Agora |
+| Par (uso real) | Paleta pura | Correção | Resultado |
 |---|---:|---|---:|
-| Verde musgo como **texto** (`.delta-negative`) | 1,96:1 ❌ | variante de mesmo matiz `#548654` | **4,50:1** ✅ |
-| Vermelho sangue como **texto** (faixa extrema) | 1,92:1 ❌ | variante `#CC5555` | **4,58:1** ✅ |
-| Carmesim como **texto** (`.delta-positive`) | 3,85:1 ⚠️ | variante `#EB264E` | **4,51:1** ✅ |
-| Verde musgo como **borda/barra** | 1,96:1 ❌ | variante `#548654` | **4,50:1** ✅ |
-| Pergaminho sobre cinza ferrugem | 2,96:1 ❌ | cinza nunca usado como fundo | — |
-| Ouro do PDF sobre branco | 3,25:1 ⚠️ | ouro escuro `#876207` | **4,69:1** ✅ |
-| Cinza ferrugem no PDF sobre branco | 4,00:1 ⚠️ | `#817463` | **4,55:1** ✅ |
+| Vermelho óxido como **texto** (faixa extrema) | 2,55:1 ❌ | variante de mesmo matiz `#DF5555` | **4,51:1** ✅ |
+| Verde petróleo como **texto** (`.delta-negative`) | 2,70:1 ❌ | variante `#00957C` | **4,53:1** ✅ |
+| Verde petróleo como **borda/barra** | 2,70:1 ❌ | variante `#00957C` | **4,53:1** ✅ |
+| Laranja ferrugem como **texto** | 3,94:1 ❌ | variante `#DC5C00` | **4,52:1** ✅ |
+| Branco sobre o **botão primário** | 4,31:1 ❌ | laranja do botão `#C75300` | **4,50:1** ✅ |
+| Laranja ferrugem no **tema claro** (sobre papel) | 3,85:1 ❌ | laranja escurecida `#BA4D00` | **4,52:1** ✅ |
+| Cinza do PDF sobre branco | 4,00:1 ⚠️ | `#5A5A5E` | **6,12:1** ✅ |
 
 **Regra adotada:** a paleta da marca é preservada como **preenchimento, borda e acento
 gráfico**; quando a cor vira **texto** sobre fundo escuro, usa-se uma variante de
 **mesmo matiz e mesma saturação** com luminosidade ajustada até atingir ≥ 4,5:1.
-Os contrastes são **verificados por teste automatizado** — uma regressão de cor
-quebre a suíte.
+O botão primário é a única exceção: usa um laranja **ligeiramente mais escuro**
+(`#C75300`) para que o texto branco atinja 4,5:1, enquanto a cor da marca segue nos
+preenchimentos. Os contrastes são **verificados por teste automatizado** — uma
+regressão de cor quebra a suíte.
 
 | Critério WCAG 2.1 | Exigência | Status |
 |---|---|:---:|
@@ -992,6 +1027,10 @@ A opção **🗂️ Todos os Painéis** mostra tudo de uma vez.
 | ⚡ **Régua de Cobrança & Ações** | **Gerador de acionamento WhatsApp**, exportação CSV da base filtrada e **relatório PDF de diretoria** | — |
 | 📞 **Rastreador de Recuperação** | Registro nominal das ações por linha (telefone + mês), **SLA real de 1º contato**, taxa de conversão, MRR recuperado, produtividade por canal/operador e **recuperação observada** | — |
 | 🗂️ **Todos os Painéis** | Vista consolidada de todos os painéis simultâneos | — |
+| 🎨 **Tema Concreto (claro)** | O mesmo Cockpit no tema claro — alternável na sidebar | [img11](assets/img11_claro.png) |
+
+> Todas as capturas foram geradas a partir da aplicação em execução, com a paleta
+> **Noir Industrial** — exceto `img11`, que mostra o tema **Concreto (claro)**.
 
 ### 7.1 Cockpit Executivo
 
@@ -1078,6 +1117,22 @@ A00001;2026-05-04 09:12:00;81985874568;202605;29.704.572 CINTIA...;WhatsApp;Cont
 
 > **Privacidade:** o telefone é mascarado nas mensagens de log (`mascarar()`); o histórico
 > local guarda o número completo por ser a chave operacional da linha.
+
+### 7.9 Tema Concreto (claro)
+
+![Cockpit Executivo no tema Concreto (claro)](assets/img11_claro.png)
+
+*O mesmo Cockpit no tema **Concreto (claro)** — papel `#F2F2F0` com os mesmos matizes da
+paleta Noir Industrial escurecidos para garantir contraste em fundo claro. A troca é
+feita na sidebar (`🎨 Tema de exibição`) e vale imediatamente, sem reiniciar o servidor.*
+
+| | 🌙 Noir Industrial | ☀️ Concreto |
+|---|---|---|
+| Fundo | Grafite `#111111` | Concreto `#F2F2F0` |
+| Card | Cinza chumbo `#1C1C1E` | Branco `#FFFFFF` |
+| Texto | Branco sujo `#D4D4D4` | Tinta grafite `#1A1A1C` |
+| Acento | Laranja `#DC5C00` | Laranja `#BA4D00` |
+| Rampa | `#4A2C1A → #7A3200 → #B85A1E → #E8763A → #F0A05A` | `#EADFD2 → #D08A4A → #CC5500 → #8A3A00 → #4A2000` |
 
 ---
 
@@ -1414,8 +1469,8 @@ flowchart LR
 | ✅ Concluído | Baixa | **Containerização (Docker)** — multi-estágio, usuário não-root, healthcheck |
 | ✅ Concluído | Baixa | **Qualidade de Código e Documentação** — type hints, `CONTRIBUTING.md`, `CHANGELOG.md` |
 | ✅ Concluído | Baixa | **CI/CD e serviço Windows** — workflow pronto; instalador NSSM/`sc` |
-| ✅ Concluído | Alta | **Tema Gótico Vitoriano + Tema Pergaminho** — `tema.py` como fonte única, troca em tempo de execução, rampas sequenciais vitorianas no lugar das escalas azuis do Plotly |
-| ✅ Concluído | Alta | **Auditoria de acessibilidade (WCAG 2.1)** — 12 falhas de contraste corrigidas (verde musgo e vermelho sangue como texto ficavam em ~1,9:1) e verificadas por teste |
+| ✅ Concluído | Alta | **Tema Noir Industrial + Tema Concreto** — `tema.py` como fonte única, troca em tempo de execução, rampas sequenciais industriais no lugar das escalas azuis do Plotly |
+| ✅ Concluído | Alta | **Auditoria de acessibilidade (WCAG 2.1)** — 12 falhas de contraste corrigidas (verde petróleo e óxido como texto ficavam em ~2,6:1) e verificadas por teste |
 | ✅ Concluído | Alta | **Sanitização de mensagens** — nome da empresa, telefone de atendimento e nomes de pessoas substituídos em duas camadas (ETL + interface) |
 | ✅ Concluído | Alta | **Dados fora do versionamento** — `.gitignore` corrigido (`*.csv$` não ignorava nada) e CSVs removidos do índice do Git |
 | ✅ Concluído | Média | **Correção do botão do WhatsApp** — o cartão de acionamento era renderizado como bloco de código; agora usa linha única e `st.link_button` |

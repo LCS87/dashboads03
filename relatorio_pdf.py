@@ -14,29 +14,13 @@ from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 
 from logging_config import configurar_logging
-from tema import (
-    BORDO_ESCURO,
-    CARMESIM,
-    CINZA_FERRUGEM,
-    DOURADO_ENVELHECIDO,
-    PERGAMINHO,
-    TEMA_PADRAO,
-    VERDE_MUSGO,
-    VERMELHO_SANGUE,
-)
+from tema import TEMA_PADRAO
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 log = configurar_logging("relatorio")
 
-# Paleta Gótica Vitoriana (fonte única: tema.py)
-NAVY = colors.HexColor(BORDO_ESCURO)            # bordô escuro
-CYAN = colors.HexColor(DOURADO_ENVELHECIDO)     # dourado envelhecido
-CORAL = colors.HexColor(CARMESIM)               # carmesim
-AMBER = colors.HexColor(DOURADO_ENVELHECIDO)    # dourado envelhecido
-GREEN = colors.HexColor(VERDE_MUSGO)            # verde musgo
-SLATE = colors.HexColor(CINZA_FERRUGEM)         # cinza ferrugem
-LIGHT = colors.HexColor(PERGAMINHO)             # pergaminho
-CRIMSON = colors.HexColor(VERMELHO_SANGUE)      # vermelho sangue
+# A paleta do documento é resolvida dentro de gerar_pdf(), a partir do tema ativo
+# (ver `tema.py` — paleta Noir Industrial).
 
 AGING_ORDER = [
     "Até 30 dias",

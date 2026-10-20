@@ -1,27 +1,35 @@
-"""Sistema de temas do dashboard — Gótico Vitoriano (escuro) e Pergaminho (claro).
+"""Sistema de temas do dashboard — Noir Industrial (escuro) e Concreto (claro).
 
 Fonte única de verdade das cores, dos estilos CSS e dos templates Plotly.
 
 Objetivo
 --------
-Manter uma **identidade visual vitoriana** (sangue, ouro, pergaminho, bordô) em
-dois modos de exibição, com **contraste WCAG 2.1 AA verificado** em todos os pares
-de cor efetivamente usados:
+Manter uma **identidade visual industrial** em dois modos de exibição, com
+**contraste WCAG 2.1 AA verificado** em todos os pares de cor efetivamente usados.
 
-- **Escuro** — Gótico Vitoriano: preto carvão, bordô escuro, vermelho sangue,
-  dourado envelhecido, pergaminho, cinza ferrugem, carmesim, verde musgo.
-- **Claro** — Pergaminho: papel envelhecido, tinta sepia, sangue e ouro escuros.
+Paleta Noir Industrial
+----------------------
+| Elemento            | Cor                | Hex       |
+|---------------------|--------------------|-----------|
+| Background principal| Grafite           | ``#111111``|
+| Cards / Sidebar     | Cinza chumbo       | ``#1C1C1E``|
+| Acento primário     | Laranja ferrugem   | ``#CC5500``|
+| Acento secundário   | Ciano enferrujado  | ``#008B8B``|
+| Texto principal     | Branco sujo        | ``#D4D4D4``|
+| Alerta / risco      | Vermelho óxido     | ``#B22222``|
+| Sucesso / positivo  | Verde petróleo     | ``#006D5B``|
 
 Regras de acessibilidade aplicadas
 ----------------------------------
-1. A paleta **da marca** (as 8 cores do briefing) é preservada como cor de
+1. A paleta **da marca** (as 7 cores do briefing) é preservada como cor de
    *preenchimento*, borda e acento gráfico.
-2. Como texto sobre fundo escuro, as cores saturadas escuras (sangue, musgo,
-   carmesim) são substituídas por **variantes de luminosidade do mesmo matiz**
+2. Como texto sobre fundo escuro, as cores saturadas escuras (laranja, óxido,
+   petróleo) são substituídas por **variantes de luminosidade do mesmo matiz**
    (H e S preservados), que atingem ≥ 4,5:1.
-3. O mesmo vale no sentido inverso no tema claro: o dourado é escurecido para
-   continuar legível sobre papel.
-4. Barras, bordas e demais elementos não textuais atingem ≥ 3:1 (WCAG 1.4.11).
+3. O botão primário usa um laranja levemente mais escuro (``#C75300``) para que
+   o texto branco atinja 4,5:1 — a cor da marca continua em preenchimentos.
+4. Barras, bordas e demais elementos não textuais atingem ≥ 3:1 (WCAG 1.4.11),
+   e faixas vizinhas de gráficos são separadas por **ΔE ≥ 19** em CIE76.
 """
 from __future__ import annotations
 
@@ -30,17 +38,16 @@ from dataclasses import dataclass, field
 import plotly.graph_objects as go
 
 # =====================================================================
-# PALETA DA MARCA (briefing) — usada como preenchimento / acento gráfico
+# PALETA DA MARCA (briefing) — preenchimento, borda e acento gráfico
 # =====================================================================
 
-PRETO_CARVAO = "#0D0D0D"          # background principal
-BORDO_ESCURO = "#1A0A0A"          # cards e sidebar
-VERMELHO_SANGUE = "#8B0000"       # acento primário
-DOURADO_ENVELHECIDO = "#B8860B"   # acento secundário
-PERGAMINHO = "#E8DCC8"            # texto principal
-CINZA_FERRUGEM = "#8B7D6B"        # texto secundário
-CARMESIM = "#DC143C"              # alerta / risco
-VERDE_MUSGO = "#2E4A2E"           # sucesso / positivo
+GRAFITE = "#111111"             # background principal
+CHUMBO = "#1C1C1E"              # cards e sidebar
+LARANJA_FERRUGEM = "#CC5500"    # acento primário
+CIANO_ENFERRUJADO = "#008B8B"   # acento secundário
+BRANCO_SUJO = "#D4D4D4"         # texto principal
+VERMELHO_OXIDO = "#B22222"      # alerta / risco
+VERDE_PETROLEO = "#006D5B"      # sucesso / positivo
 
 #: Nome da empresa exibido na interface (nunca a razão social real).
 NOME_EMPRESA = "Telecomunicação S/A"
@@ -70,13 +77,13 @@ class Tema:
     texto: str                 # texto principal
     texto_sec: str             # texto secundário / rótulos
 
-    acento: str                # acento secundário (dourado) já com contraste válido
+    acento: str                # acento secundário (ferrugem) já com contraste válido
     acento_claro: str          # variante clara do acento (bordas finas)
     primario: str              # acento primário (fundo de botão)
 
-    alerta: str                # carmesim — falha crítica
-    positivo: str              # verde musgo — sucesso
-    perigo: str                # vermelho sangue — risco iminente
+    alerta: str                # óxido — falha crítica
+    positivo: str              # petróleo — sucesso
+    perigo: str                # óxido — risco iminente
 
     faixas: dict = field(default_factory=dict)   # faixas de risco
     aging: dict = field(default_factory=dict)     # faixas de aging
@@ -87,15 +94,15 @@ class Tema:
     # --- paleta do relatório em PDF (fundo de papel, sempre impresso) ---
     pdf_fundo: str = "#FFFFFF"
     pdf_cartao: str = "#FFFFFF"
-    pdf_cabecalho: str = "#2A0A0A"
-    pdf_texto: str = "#1A1008"
-    pdf_texto_sec: str = "#6B5B4A"
-    pdf_borda: str = "#D5CCBB"
-    pdf_trilho: str = "#D5CCBB"
-    pdf_acento: str = "#876207"
-    pdf_alerta: str = "#C21038"
-    pdf_positivo: str = "#2E4A2E"
-    pdf_perigo: str = "#8B0000"
+    pdf_cabecalho: str = "#141416"
+    pdf_texto: str = "#1A1A1C"
+    pdf_texto_sec: str = "#5A5A5E"
+    pdf_borda: str = "#D8D8D4"
+    pdf_trilho: str = "#DEDEDA"
+    pdf_acento: str = "#BA4D00"
+    pdf_alerta: str = "#B12222"
+    pdf_positivo: str = "#006C5A"
+    pdf_perigo: str = "#B12222"
 
     # -----------------------------------------------------------------
     # Propriedades derivadas
@@ -108,7 +115,7 @@ class Tema:
 
     def cor_sobre(self, fundo: str) -> str:
         """Escolhe entre texto claro e escuro conforme o fundo informado."""
-        return self.texto if _luminancia(fundo) < 0.45 else "#1A1008"
+        return self.texto if _luminancia(fundo) < 0.45 else "#141416"
 
 
 # ---------------------------------------------------------------------
@@ -148,83 +155,83 @@ def nivel_contraste(razao: float) -> str:
 
 
 # =====================================================================
-# TEMA ESCURO — Gótico Vitoriano
+# TEMA ESCURO — Noir Industrial
 # =====================================================================
 
 TEMA_ESCURO = Tema(
     nome="escuro",
-    rotulo="Gótico Vitoriano (escuro)",
+    rotulo="Noir Industrial (escuro)",
     emoji="🌙",
-    fundo=PRETO_CARVAO,
-    card=BORDO_ESCURO,
-    card_alto="#241212",
-    borda="rgba(232, 220, 200, 0.10)",
-    borda_forte="rgba(184, 134, 11, 0.45)",
-    texto=PERGAMINHO,
-    texto_sec=CINZA_FERRUGEM,
-    acento=DOURADO_ENVELHECIDO,      # 5,91:1 sobre card
-    acento_claro="#D4AF37",
-    primario=VERMELHO_SANGUE,
-    alerta="#EB264E",                # carmesim clareado — 4,51:1
-    positivo="#548654",              # musgo clareado — 4,50:1
-    perigo="#CC5555",                # sangue clareado — 4,58:1
+    fundo=GRAFITE,
+    card=CHUMBO,
+    card_alto="#26262A",
+    borda="rgba(212, 212, 212, 0.12)",
+    borda_forte="rgba(204, 85, 0, 0.55)",
+    texto=BRANCO_SUJO,
+    texto_sec="#9A9AA0",
+    acento="#DC5C00",           # ferrugem clareada p/ texto — 4,52:1
+    acento_claro="#E8763A",
+    primario="#C75300",         # laranja do botão — branco 4,50:1
+    alerta="#DF5555",           # óxido clareado — 4,51:1
+    positivo="#00957C",         # petróleo clareado — 4,53:1
+    perigo="#DF5555",
     faixas={
-        "Baixo (Janela de Ouro)": "#548654",
-        "Médio (Atenção)": "#B8860B",
-        "Alto (Risco Crítico)": "#EB264E",
-        "Extremo (Pré-Desconexão)": "#CC5555",
+        "Baixo (Janela de Ouro)": "#00957C",
+        "Médio (Atenção)": "#8A8A00",
+        "Alto (Risco Crítico)": "#DC5C00",
+        "Extremo (Pré-Desconexão)": "#DF5555",
     },
     aging={
-        "Até 30 dias": "#548654",
-        "De 31 a 60 dias": "#7A6A1E",
-        "De 61 a 90 dias": "#B8860B",
-        "De 91 a 120 dias": "#C1440E",
-        "Maior que 120 dias": "#CC5555",
+        "Até 30 dias": "#00957C",
+        "De 31 a 60 dias": "#8A8A00",
+        "De 61 a 90 dias": "#DC5C00",
+        "De 91 a 120 dias": "#B85A1E",
+        "Maior que 120 dias": "#DF5555",
     },
-    rampa=("#45211F", "#6E1A1A", "#8B0000", "#B31212", "#D4AF37"),
-    colorway=("#B8860B", "#EB264E", "#548654", "#CC5555",
-               "#E8DCC8", "#8B7D6B", "#D4AF37", "#5C0011"),
-    grade="rgba(232, 220, 200, 0.10)",
+    rampa=("#4A2C1A", "#7A3200", "#B85A1E", "#E8763A", "#F0A05A"),
+    colorway=("#DC5C00", "#009393", "#DF5555", "#00957C",
+               "#D4D4D4", "#9A9AA0", "#E8763A", "#5A5A5E"),
+    grade="rgba(212, 212, 212, 0.12)",
 )
 
 # =====================================================================
-# TEMA CLARO — Pergaminho
+# TEMA CLARO — Concreto
 # =====================================================================
 
 TEMA_CLARO = Tema(
     nome="claro",
-    rotulo="Pergaminho (claro)",
+    rotulo="Concreto (claro)",
     emoji="☀️",
-    fundo="#F3EBDC",
-    card="#FCF8EF",
-    card_alto="#FFFFFF",
-    borda="rgba(42, 30, 20, 0.16)",
-    borda_forte="rgba(139, 0, 0, 0.38)",
-    texto="#2A1E14",                # tinta sepia — 13,7:1
-    texto_sec="#6B5B4A",            # 5,50:1
-    acento="#876207",               # ouro escuro — 4,69:1
-    acento_claro="#B8860B",
-    primario=VERMELHO_SANGUE,
-    alerta="#C21038",               # carmesim escuro — 5,18:1
-    positivo="#2E4A2E",             # musgo — 8,30:1
-    perigo="#8B0000",               # sangue — 8,45:1
+    fundo="#F2F2F0",
+    card="#FFFFFF",
+    card_alto="#FAFAF8",
+    borda="rgba(26, 26, 28, 0.16)",
+    borda_forte="rgba(186, 77, 0, 0.45)",
+    texto="#1A1A1C",             # tinta grafite — 15,5:1
+    texto_sec="#5A5A5E",         # 6,12:1
+    acento="#BA4D00",           # ferrugem escurecida — 4,52:1
+    acento_claro=LARANJA_FERRUGEM,
+    primario="#BA4D00",         # branco sobre ela = 5,06:1
+    alerta="#B12222",           # óxido — 6,00:1
+    positivo="#006C5A",         # petróleo — 5,69:1
+    perigo="#B12222",
     faixas={
-        "Baixo (Janela de Ouro)": "#3F6B3F",
-        "Médio (Atenção)": "#876207",
-        "Alto (Risco Crítico)": "#C21038",
-        "Extremo (Pré-Desconexão)": "#8B0000",
+        "Baixo (Janela de Ouro)": "#006C5A",
+        "Médio (Atenção)": "#6B6B00",
+        "Alto (Risco Crítico)": "#BA4D00",
+        "Extremo (Pré-Desconexão)": "#B12222",
     },
     aging={
-        "Até 30 dias": "#3F6B3F",
-        "De 31 a 60 dias": "#7A6A1E",
-        "De 61 a 90 dias": "#876207",
-        "De 91 a 120 dias": "#A63A0A",
-        "Maior que 120 dias": "#8B0000",
+        "Até 30 dias": "#006C5A",
+        "De 31 a 60 dias": "#6B6B00",
+        "De 61 a 90 dias": "#BA4D00",
+        "De 91 a 120 dias": "#8A3A00",
+        "Maior que 120 dias": "#B12222",
     },
-    rampa=("#E5D8B6", "#DCC178", "#B8860B", "#8B0000", "#5C0011"),
-    colorway=("#8B0000", "#876207", "#C21038", "#3F6B3F",
-               "#2A1E14", "#6B5B4A", "#B8860B", "#5C0011"),
-    grade="rgba(42, 30, 20, 0.14)",
+    rampa=("#EADFD2", "#D08A4A", "#CC5500", "#8A3A00", "#4A2000"),
+    colorway=("#BA4D00", "#007B7B", "#B12222", "#006C5A",
+               "#1A1A1C", "#5A5A5E", "#CC5500", "#8A3A00"),
+    grade="rgba(26, 26, 28, 0.14)",
 )
 
 TEMAS = {TEMA_ESCURO.nome: TEMA_ESCURO, TEMA_CLARO.nome: TEMA_CLARO}
@@ -356,7 +363,7 @@ def css_tema(tema: Tema) -> str:
 
     html, body, [class*="css"] {{ font-family: 'Plus Jakarta Sans', sans-serif; }}
 
-    /* Títulos em serifa vitoriana */
+    /* Títulos em serifa */
     .header-title, h1, h2, h3, h4, h5, h6,
     [data-testid="stMarkdownContainer"] h1,
     [data-testid="stMarkdownContainer"] h2,
@@ -394,11 +401,47 @@ def css_tema(tema: Tema) -> str:
         color: {tema.cor_texto_sobre_primario} !important;
         border: 1px solid {tema.primario} !important;
     }}
-    [data-baseweb="input"] > div, [data-baseweb="base-select"] > div,
-    [data-baseweb="input"] input, textarea {{
+    /* ---------- Campos de entrada ----------
+       O Streamlit aplica a cor de fundo do tema base em um div interno de cada
+       controle (role="group"). Sem estas regras, os campos ficam escuros
+       mesmo no tema claro. */
+    [data-testid="stSelectbox"] > div > div[role="group"],
+    [data-testid="stMultiSelect"] > div > div[role="group"],
+    [data-testid="stTextInputRootElement"],
+    [data-testid="stNumberInputContainer"],
+    [data-baseweb="select"] > div,
+    [data-baseweb="base-select"] > div,
+    [data-baseweb="input"] > div {{
         background-color: {tema.card_alto} !important;
         color: {tema.texto} !important;
         border-color: {tema.borda} !important;
+    }}
+    [data-testid="stSelectbox"] div[role="group"] input,
+    [data-testid="stMultiSelect"] div[role="group"] input,
+    [data-testid="stTextInput"] input,
+    [data-testid="stNumberInput"] input,
+    div[role="group"] input,
+    [data-baseweb="input"] input,
+    textarea {{
+        background-color: {tema.card_alto} !important;
+        color: {tema.texto} !important;
+        caret-color: {tema.acento} !important;
+    }}
+    ::placeholder {{ color: {tema.texto_sec} !important; opacity: 1 !important; }}
+    [data-testid="stNumberInput"] button,
+    [data-testid="stSelectbox"] button,
+    [data-testid="stMultiSelect"] button {{
+        background-color: {tema.card_alto} !important;
+        color: {tema.texto_sec} !important;
+    }}
+    [data-testid="stSelectbox"] svg,
+    [data-testid="stMultiSelect"] svg {{
+        fill: {tema.texto_sec} !important;
+    }}
+    [data-baseweb="popover"] [role="listbox"],
+    [data-baseweb="menu"] {{
+        background-color: {tema.card_alto} !important;
+        color: {tema.texto} !important;
     }}
     [data-testid="stExpander"] {{
         background-color: {tema.card} !important;
@@ -420,14 +463,14 @@ def css_tema(tema: Tema) -> str:
         border-radius: 16px;
         padding: 24px 28px;
         margin-bottom: 24px;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.35);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.45);
         backdrop-filter: blur(12px);
     }}
     .header-title {{
         font-size: 26px;
         font-weight: 800;
         letter-spacing: -0.5px;
-        background: linear-gradient(90deg, {tema.acento_claro}, {tema.alerta}, {tema.primario});
+        background: linear-gradient(90deg, {tema.acento_claro}, {tema.alerta}, {tema.acento});
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         margin: 0;
@@ -451,7 +494,7 @@ def css_tema(tema: Tema) -> str:
         border-radius: 14px;
         padding: 20px;
         transition: transform 0.2s ease, border-color 0.2s ease;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.22);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     }}
     .metric-card:hover {{ transform: translateY(-2px); border-color: {tema.acento}; }}
     .metric-label {{
@@ -474,14 +517,13 @@ def css_tema(tema: Tema) -> str:
         font-weight: 600; font-size: 13.5px; padding: 10px 18px; transition: all 0.2s;
     }}
     .stTabs [aria-selected="true"] {{
-        background: linear-gradient(90deg, #5C0011, {tema.primario}) !important;
+        background: linear-gradient(90deg, #7A3200, {tema.primario}) !important;
         color: {tema.cor_texto_sobre_primario} !important;
     }}
 
     /* ---------- Navegação por painéis e seletores (pills) ----------
        O Streamlit usa primaryColor como cor do texto do item selecionado.
-       Sem esta regra, o item ativo ficaria vermelho-sangue sobre fundo
-       vermelho-sangue (1,9:1) — ilegível. */
+       Sem esta regra, o item ativo ficaria laranja sobre fundo laranja. */
     [data-testid="stButtonGroup"] button[data-variant="pills"] {{
         background-color: transparent !important;
         color: {tema.texto_sec} !important;
@@ -494,7 +536,7 @@ def css_tema(tema: Tema) -> str:
     }}
     [data-testid="stButtonGroup"] button[data-variant="pills"][data-selected="true"],
     [data-testid="stButtonGroup"] button[data-variant="pills"][aria-checked="true"] {{
-        background: linear-gradient(90deg, #5C0011, {tema.primario}) !important;
+        background: linear-gradient(90deg, #7A3200, {tema.primario}) !important;
         color: {tema.cor_texto_sobre_primario} !important;
         border-color: {tema.primario} !important;
         font-weight: 700 !important;
