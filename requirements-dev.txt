@@ -2,3 +2,4 @@
 # Instalação:  pip install -r requirements-dev.txt
 -r requirements.txt
 pytest>=8.0
+markdown-it-py>=3.0   # usado nos testes de regressão de renderização Markdown

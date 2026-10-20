@@ -5,7 +5,107 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ## [Não publicado]
 
-### Documentação — README reescrito (Metodologia, Limitações e Cronograma)
+### Corrigido — Porta 8503 ocupada e inicialização resiliente
+- `iniciar_dashboard.bat` agora **detecta a porta ocupada**, identifica o PID que a
+  segura, **encerra a instância anterior** e segue — o script de 1 clique não falha
+  mais com *"Port 8503 is not available"*.
+- Aguarda até 10 s a liberação do socket antes de desistir, com mensagem clara e
+  orientação para usar outra porta.
+- **Novo parâmetro de porta**: `iniciar_dashboard.bat 8600` sobe em outra porta;
+  `iniciar_dashboard.bat service` mantém o modo de serviço do Windows.
+- Corrigido o `echo [!]` do batch, que criava um par de expansão inválido na
+  expansão atrasada e corrompia a saída; `timeout` foi trocado por `ping` (o
+  `timeout` falha quando o *stdin* está redirecionado).
+
+### Corrigido — Dependências e ambiente
+- `requirements.txt` agora traz **limites superiores** (`streamlit<2`, `pandas<4`,
+  `numpy<3`, `plotly<8`, `pyarrow<30`, `reportlab<6`) para evitar saltos de versão
+  principal com mudanças incompatíveis. Versões testadas registradas no README.
+- `requirements-dev.txt` passou a incluir **`markdown-it-py`**, usado pelos testes de
+  regressão de renderização Markdown — sem ele, 5 testes eram **pulados** silenciosamente.
+- Validado com o conjunto mais novo (Python 3.11 · streamlit 1.66 · **pandas 3.0.6** ·
+  **numpy 2.4.6** · **plotly 7.1.0** · pyarrow 26 · reportlab 5.0.1): **173/173 testes
+  passando** e dashboard renderizando corretamente.
+
+### Adicionado — Tema Gótico Vitoriano e Tema Pergaminho (claro)
+- **Novo módulo [`tema.py`](tema.py)**: fonte única de verdade das cores, dos temas, do
+  CSS dinâmico e do template Plotly. Nenhuma cor está mais hard-coded no `app.py`.
+- **Dois temas de exibição**, alternáveis **em tempo de execução** na sidebar
+  (`🎨 Tema de exibição`), sem reiniciar o servidor:
+  - 🌙 **Gótico Vitoriano (escuro)** — preto carvão, bordô escuro, vermelho sangue,
+    dourado envelhecido, pergaminho, cinza ferrugem, carmesim, verde musgo;
+  - ☀️ **Pergaminho (claro)** — papel envelhecido, tinta sepia, ouro escuro, sangue.
+- **Rampas sequenciais vitorianas** substituem as escalas padrão do Plotly
+  (`Blues`, `Teal`, `RdBu_r`, `Reds`, `Blugrn`, `Bluyl`), que introduciam azuis
+  destoantes da identidade visual — a aba *Inteligência Geográfica* é o caso mais
+  evidente.
+- **Tipografia vitoriana**: títulos em `Playfair Display` (serifa), corpo em
+  `Plus Jakarta Sans`.
+- `relatorio_pdf.py` recebe o tema ativo e usa uma **paleta de papel** própria
+  (sempre impressa em fundo claro, com contraste AA).
+- `app_data.pdf_do_recorte()` e `gerar_pdf()` passaram a aceitar o tema.
+- Capturas do README (`assets/img01..img10`) **regeneradas** com o novo tema.
+
+### Corrigido — Auditoria de acessibilidade (WCAG 2.1)
+A paleta original do briefing falhava em 12 pares de cor realmente usados. Medição
+objetiva das razões de contraste e correções:
+
+| Uso | Antes | Agora |
+|---|---:|---:|
+| Verde musgo como **texto** (`.delta-negative`) | 1,96:1 | **4,50:1** |
+| Vermelho sangue como **texto** (faixa extrema) | 1,92:1 | **4,58:1** |
+| Carmesim como **texto** (`.delta-positive`) | 3,85:1 | **4,51:1** |
+| Verde musgo como **borda/barra** | 1,96:1 | **4,50:1** |
+| Ouro no PDF sobre branco | 3,25:1 | **4,69:1** |
+| Cinza ferrugem no PDF sobre branco | 4,00:1 | **4,55:1** |
+
+A regra adotada preserva a **paleta da marca** para preenchimento/borda/acento e usa
+**variantes de mesmo matiz e saturação** (apenas a luminosidade muda) quando a cor
+vira texto sobre fundo escuro. Todos os contrastes passam a ser **verificados por
+teste automatizado**.
+
+### Corrigido — Botão do WhatsApp renderizava como texto
+O cartão de acionamento da aba ⚡ Régua de Cobrança aparecia com a tag
+`<a href="https://wa.me/...">` impressa na tela. Causa raiz: em Markdown, **indentação
+≥ 4 espaços** vira bloco de código e **linha em branco** encerra o bloco HTML — o
+cartão inteiro era interpretado como código. Correções:
+- cartão emitido em **linha única**, sem indentação e sem linha em branco;
+- botão trocado por **`st.link_button`** (componente nativo, imune ao parser de
+  Markdown e herda o tema);
+- teste de regressão que falha se qualquer `<a href` vazar para o markdown.
+
+### Corrigido — Navegação com item ativo ilegível
+O Streamlit usa `primaryColor` como **cor do texto** do `pill` selecionado. Com o
+vermelho sangue sobre o gradiente vermelho, o item ativo ficava em **1,9:1**.
+Corrigido com regra CSS sobre `[data-testid="stButtonGroup"] button[data-selected]`.
+
+### Corrigido — Eixos e legendas dos gráficos com a cor padrão do Plotly
+O Plotly faz *merge* do template com o template padrão, e o padrão prevalecia — os
+rótulos dos eixos ficavam em `#E6EAF1` (claro), invisíveis sobre papel. As cores do
+tema passam a ser aplicadas como **propriedades explícitas do layout**, que sempre
+vencem o template.
+
+### Corrigido — `.gitignore` não ignorava nada
+Os padrões estavam escritos como `*.csv$` e `*.parquet$`. No `.gitignore` o cifrão é
+literal, então o padrão casaria apenas arquivos terminados em `.csv$` — ou seja,
+**nada era ignorado** e os CSVs foram versionados. Corrigido para `*.csv`, `*.csv.bak`,
+`*.xlsx`, `*.xls`, `*.xlsm`, `*.ods`, `*.parquet`, `*.feather`, `*.dta`, `*.sav` e
+`*.tsv`. Os **7 arquivos de dados** foram removidos do índice do Git (os arquivos
+permanecem no disco) e o `.dockerignore` foi revisado.
+
+### Adicionado — Sanitização de mensagens
+O nome da empresa, o telefone de atendimento e nomes de diretores/gerentes ainda
+apareciam nas mensagens de cobrança (herdados dos CSVs de origem). Nova função
+`etl_pipeline.sanitizar_mensagem()` aplicada em **duas camadas**:
+1. **no ETL**, para que a base tratada nunca contenha a identificação;
+2. **na interface**, protegendo bases antigas já gravadas.
+
+Substituições: nome da empresa → `Telecomunicação S/A`; telefone real →
+`(00) 00000-0000`; nomes de pessoas → `Responsável Comercial`. O ETL verifica o
+resultado e registra no log se algo escapa. Verificado: **0 ocorrências** de nome da
+empresa, telefone real ou nome de pessoa nas 2.061 mensagens da base.
+
+### Corrigido — README reescrito (Metodologia, Limitações e Cronograma)
 - `README.md` reescrito e ampliado (12 KB → ~80 KB, 1.330 linhas), passando a ser a
   **documentação central completa** do projeto, com 17 seções e sumário navegável.
 - **Seção 3 — Metodologia** (nova): fluxo metodológico ponta a ponta, 12 etapas do ETL,
@@ -93,7 +193,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 - `.dockerignore` enxugando o contexto de build.
 
 ### Adicionado — Suíte de testes
-- `tests/` com **131 testes pytest** (ETL, agregações, alertas, modelo, rastreador
+- `tests/` com **173 testes pytest** (ETL, agregações, alertas, modelo, rastreador
   e UI), executando em ~15 s.
 - `tests/conftest.py` com fixtures **herméticas** (base real somente-leitura,
   recorte sintético de fallback e persistência do rastreador em `tmp_path`).

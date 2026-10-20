@@ -198,7 +198,8 @@ def propensao_recuperacao(df_base: pd.DataFrame) -> dict:
 # ===================== PDF CACHEADO =====================
 
 @st.cache_data(show_spinner=False, max_entries=8)
-def pdf_do_recorte(df: pd.DataFrame, ticket: float, referencia: str) -> bytes:
+def pdf_do_recorte(df: pd.DataFrame, ticket: float, referencia: str, tema_nome: str = "escuro") -> bytes:
     """Gera (e cacheia) o PDF executivo do recorte atual."""
     from relatorio_pdf import gerar_pdf
-    return gerar_pdf(df, ticket, referencia)
+    from tema import obter_tema
+    return gerar_pdf(df, ticket, referencia, tema=obter_tema(tema_nome))

@@ -29,6 +29,26 @@ PAINEIS = [
 TIMEOUT = 300
 
 
+def _navegacao(app):
+    """Devolve o seletor de navegação entre painéis (não o seletor de tema).
+
+    A navegação é identificada pelo rótulo, e não por índice, para que a
+    inclusão de novos widgets na sidebar não quebre os testes.
+    """
+    for p in app.pills:
+        if "Navega" in str(getattr(p, "label", "")):
+            return p
+    raise AssertionError("seletor de navegação entre painéis não encontrado")
+
+
+def _seletor_tema(app):
+    """Devolve o seletor de tema de exibição."""
+    for p in app.pills:
+        if "Tema" in str(getattr(p, "label", "")):
+            return p
+    raise AssertionError("seletor de tema não encontrado")
+
+
 @pytest.fixture(scope="module")
 def at(projeto_dir):
     """AppTest carregado uma vez por módulo (carga da base é a parte cara)."""
@@ -66,18 +86,18 @@ def test_nao_vaza_coluna_anonimizada_na_ui(at):
 
 @pytest.mark.parametrize("painel", PAINEIS + ["🗂️ Todos os Painéis"])
 def test_paineis_renderizam_sem_excecao(at, painel):
-    at.pills[0].set_value(painel).run()
+    _navegacao(at).set_value(painel).run()
     assert not at.exception, f"painel '{painel}' levantou exceção"
 
 
 def test_filtro_todos_os_meses(at):
-    at.pills[0].set_value("📊 Cockpit Executivo").run()
+    _navegacao(at).set_value("📊 Cockpit Executivo").run()
     at.selectbox[-1].set_value("Todos os Meses").run()
     assert not at.exception
 
 
 def test_filtro_mes_especifico(at):
-    at.pills[0].set_value("📊 Cockpit Executivo").run()
+    _navegacao(at).set_value("📊 Cockpit Executivo").run()
     opcoes = at.selectbox[-1].options
     if len(opcoes) > 1:
         at.selectbox[-1].set_value(opcoes[1]).run()
@@ -85,14 +105,14 @@ def test_filtro_mes_especifico(at):
 
 
 def test_rastreador_sem_acoes_exibe_orientacao(at, sem_acoes):
-    at.pills[0].set_value("📞 Rastreador de Recuperação").run()
+    _navegacao(at).set_value("📞 Rastreador de Recuperação").run()
     assert not at.exception
     assert any("Nenhuma ação registrada" in info.value for info in at.info)
 
 
 def test_rastreador_formulario_operador_obrigatorio(at, sem_acoes):
     """Sem operador preenchido, o registro deve ser recusado com mensagem amigável."""
-    at.pills[0].set_value("📞 Rastreador de Recuperação").run()
+    _navegacao(at).set_value("📞 Rastreador de Recuperação").run()
     at.button[0].click().run()
     assert not at.exception
     assert any("operador" in erro.value.lower() for erro in at.error)
@@ -100,7 +120,7 @@ def test_rastreador_formulario_operador_obrigatorio(at, sem_acoes):
 
 
 def test_rastreador_registro_bem_sucedido(at, sem_acoes):
-    at.pills[0].set_value("📞 Rastreador de Recuperação").run()
+    _navegacao(at).set_value("📞 Rastreador de Recuperação").run()
     at.text_input(key="rec_operador").set_value("Ana Souza").run()
     at.button[0].click().run()
 
@@ -115,12 +135,62 @@ def test_rastreador_registro_bem_sucedido(at, sem_acoes):
 
 def test_rastreador_fluxo_completo_apos_registro(at, sem_acoes):
     """Após registrar, o painel deve passar a exibir KPIs, gráficos e tabelas."""
-    at.pills[0].set_value("📞 Rastreador de Recuperação").run()
+    _navegacao(at).set_value("📞 Rastreador de Recuperação").run()
     at.text_input(key="rec_operador").set_value("Bruno Lima").run()
     at.button[0].click().run()
 
-    at.pills[0].set_value("📊 Cockpit Executivo").run()
-    at.pills[0].set_value("📞 Rastreador de Recuperação").run()
+    _navegacao(at).set_value("📊 Cockpit Executivo").run()
+    _navegacao(at).set_value("📞 Rastreador de Recuperação").run()
 
     assert not at.exception
     assert len(at.dataframe) >= 2, "esperados: histórico, SLA e/ou recuperação observada"
+
+
+def test_regua_botao_whatsapp_renderiza_como_botao(at):
+    """Regressão do bug: o botão do WhatsApp aparecia como tag HTML em texto puro.
+
+    O cartão de acionamento é emitido em linha única e o botão usa `st.link_button`,
+    que não passa pelo parser de Markdown.
+    """
+    _navegacao(at).set_value("⚡ Régua de Cobrança & Ações").run()
+    assert not at.exception
+
+    # deve existir um link_button (não um <a href> solto no markdown)
+    assert len(at.button) >= 0
+    links = [b for b in at.get("link_button") or []]
+    assert links, "esperado um link_button 'Abrir Conversa no WhatsApp'"
+
+    rotulos = " ".join(str(getattr(b, "label", "")) for b in links)
+    assert "WhatsApp" in rotulos
+
+    # nenhum markdown deve conter a tag <a href vazada como texto
+    for md in at.markdown:
+        assert "<a href=" not in md.value, "tag <a href> vazou como texto no markdown"
+
+
+def test_tema_claro_e_aplicado_sem_excecao(at):
+    """A troca de tema deve rodar limpa e refletir as cores do tema claro."""
+    seletor = _seletor_tema(at)
+    assert seletor.value == "escuro", f"tema inicial: {seletor.value!r}"
+
+    seletor.set_value("claro").run()
+    assert not at.exception
+    assert seletor.value == "claro"
+    assert at.session_state["tema_nome"] == "claro"
+
+    # o CSS aplicado deve conter as cores do tema claro
+    css = " ".join(md.value for md in at.markdown)
+    assert "#F3EBDC" in css, "fundo do tema claro ausente no CSS"
+    assert "#2A1E14" in css, "texto do tema claro ausente no CSS"
+
+    # volta para o tema escuro
+    _seletor_tema(at).set_value("escuro").run()
+    assert not at.exception
+    assert at.session_state["tema_nome"] == "escuro"
+
+
+def test_graficos_do_geografico_renderizam(at):
+    """A aba Geográfica usa rampa sequencial do tema (não as escalas azuis do Plotly)."""
+    _navegacao(at).set_value("🗺️ Inteligência Geográfica").run()
+    assert not at.exception
+    assert len(at.get("plotly_chart")) >= 2

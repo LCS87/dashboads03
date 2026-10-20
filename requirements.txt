@@ -1,6 +1,12 @@
-streamlit>=1.40
-pandas>=2.0
-numpy>=1.24
-plotly>=5.20
-pyarrow>=14.0
-reportlab>=4.0
+# Dependências de runtime do dashboard.
+#
+# Limites superiores (upper bounds) propositais: protegem contra saltos de
+# versão principal com mudanças incompatíveis (pandas 3.x, numpy 3.x, etc.).
+# Versoes testadas: Python 3.11 · pandas 2.x/3.0 · numpy 2.4 · plotly 7.1 ·
+# pyarrow 26 · reportlab 5.0.
+streamlit>=1.40,<2
+pandas>=2.0,<4
+numpy>=1.24,<3
+plotly>=5.20,<8
+pyarrow>=14.0,<30
+reportlab>=4.0,<6

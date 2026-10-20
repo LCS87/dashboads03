@@ -1,4 +1,6 @@
 import os
+import re
+
 import pandas as pd
 
 from logging_config import configurar_logging, mascarar
@@ -354,6 +356,82 @@ def clean_aging(val: object) -> str:
         return "Maior que 120 dias"
     return val
 
+# ===================== SANITIZAÇÃO DE MENSAGENS =====================
+
+#: Nomes de empresa que não podem aparecer na interface nem nas mensagens.
+NOMES_EMPRESA_PROIBIDOS = [
+    "VIVO Empresas", "VIVO", "Vivo Empresas", "Vivo",
+    "Claro Empresas", "Claro", "TIM Empresas", "Tim",
+    "Oi Empresas", "Oi",
+]
+
+#: Telefones de atendimento que não podem ser exibidos (identificam a operadora).
+TELEFONES_PROIBIDOS = [
+    "8230248079", "8230248079", "0800", "0800-", "3003-1000",
+]
+
+#: Nomes de pessoas (diretores, gerentes) que devem ser substituídos.
+NOMES_PESSOAS_PROIBIDOS = [
+    "CLAUDIO RIBEIRO DE JESUS", "LUIS OTAVIO CAVALCANTI MONTIBELO",
+]
+
+#: Nome genérico exibido no lugar da razão social real.
+NOME_EMPRESA_GENERICO = "Telecomunicação S/A"
+
+#: Telefone genérico exibido no lugar do número real de atendimento.
+TELEFONE_GENERICO = "(00) 00000-0000"
+
+#: Nomes fictícios usados para substituir nomes de pessoas.
+NOMES_PESSOAS_GENERICOS = [
+    "Responsável Comercial", "Gestor de Conta", "Coordenador de Relacionamento",
+]
+
+
+def sanitizar_mensagem(texto: str) -> str:
+    """Remove da mensagem qualquer identificação da empresa, gerente ou telefone real.
+
+    Usada em duas camadas de defesa:
+    1. no ETL, ao gravar a base tratada (a base nunca contém a identificação);
+    2. na interface, na hora de exibir (protege bases antigas já gravadas).
+
+    Args:
+        texto: mensagem original (pode ser vazia ou nulo).
+
+    Returns:
+        A mensagem sanitizada, com a razão social substituída por
+        ``Telecomunicação S/A`` e telefones de atendimento por um número genérico.
+    """
+    if texto is None or (isinstance(texto, float) and pd.isna(texto)):
+        return ""
+    s = str(texto)
+
+    # 1) Nomes de pessoas -> nomes genéricos
+    for pessoa in NOMES_PESSOAS_PROIBIDOS:
+        s = s.replace(pessoa, NOMES_PESSOAS_GENERICOS[0])
+
+    # 2) Nomes de empresa -> "Telecomunicação S/A"
+    for nome in NOMES_EMPRESA_PROIBIDOS:
+        s = re.sub(re.escape(nome), NOME_EMPRESA_GENERICO, s, flags=re.IGNORECASE)
+
+    # 3) Telefones de atendimento reais -> número genérico
+    for tel in TELEFONES_PROIBIDOS:
+        if tel.strip():
+            s = re.sub(re.escape(tel), TELEFONE_GENERICO, s, flags=re.IGNORECASE)
+
+    # 4) Qualquer telefone de 10-11 dígitos que sobre -> genérico
+    s = re.sub(r"\(?\b\d{2}\)?\s?9?\d{4}[- ]?\d{4}\b", TELEFONE_GENERICO, s)
+
+    # 5) Higiene de texto
+    s = re.sub(r"\s{2,}", " ", s).strip()
+
+    # 6) Polimento de concordância e de repetição do nome substituído
+    s = s.replace(f"do {NOME_EMPRESA_GENERICO}", f"da {NOME_EMPRESA_GENERICO}")
+    s = s.replace(f"{NOME_EMPRESA_GENERICO}, aqui é da {NOME_EMPRESA_GENERICO}",
+                  f"Olá, aqui é da {NOME_EMPRESA_GENERICO}")
+    s = s.replace(f"do {NOME_EMPRESA_GENERICO}.", f"da {NOME_EMPRESA_GENERICO}.")
+    return s
+
+
 def df_read_any_csv(path: str) -> pd.DataFrame | None:
     """Leitura robusta de qualquer CSV do projeto com fallback de encoding.
 
@@ -634,17 +712,37 @@ def _executar_etl() -> None:
         except Exception as e:
             log.warning("Não foi possível integrar as mensagens de Janeiro: %s", e)
 
+    # 9b. Sanitização: nenhuma mensagem na base tratada pode identificar a empresa,
+    #     um gerente/diretor ou exibir o telefone real de atendimento.
+    if 'MSG_EXEMPLO' in df.columns:
+        df['MSG_EXEMPLO'] = df['MSG_EXEMPLO'].map(sanitizar_mensagem)
+
     # Template padrão de cobrança WhatsApp para qualquer linha
     padrao_msg = (
-        "Olá! Sou da equipe de suporte corporativo de telecomunicações. "
+        "Olá! Sou da equipe de suporte corporativo da {empresa}. "
         "Constatamos uma pendência na(s) linha(s) do seu CNPJ {cnpj} que ocasionou a suspensão. "
         "Para regularização imediata e reativação do sinal com condições especiais, "
-        "fale conosco pelo suporte (82) 3024-8079."
+        "fale conosco pelo suporte {telefone}."
     )
     df['MSG_COBRANCA'] = df.apply(
-        lambda r: r['MSG_EXEMPLO'] if pd.notna(r.get('MSG_EXEMPLO')) else padrao_msg.format(cnpj=r['CNPJ_FORMATADO']),
+        lambda r: r['MSG_EXEMPLO'] if pd.notna(r.get('MSG_EXEMPLO')) else padrao_msg.format(
+            empresa=NOME_EMPRESA_GENERICO,
+            cnpj=r['CNPJ_FORMATADO'],
+            telefone=TELEFONE_GENERICO,
+        ),
         axis=1
     )
+    df['MSG_COBRANCA'] = df['MSG_COBRANCA'].map(sanitizar_mensagem)
+
+    # Guarda de segurança: a base tratada não pode conter o nome da empresa.
+    _padrao = "|".join(re.escape(n) for n in NOMES_EMPRESA_PROIBIDOS)
+    _resíduo = int(df['MSG_COBRANCA'].str.contains(
+        _padrao, case=False, na=False, regex=True
+    ).sum())
+    if _resíduo:
+        log.warning("Sanitização: %d mensagem(ns) ainda citam nome de empresa proibido.", _resíduo)
+    else:
+        log.info("Sanitização: nenhuma mensagem da base tratada identifica a empresa.")
     
     # 10. Anonimização: descarte definitivo dos identificadores corporativos
     cols_drop = [c for c in ANONIMIZAR_DROP if c in df.columns]

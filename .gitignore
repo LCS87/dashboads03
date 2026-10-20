@@ -19,17 +19,30 @@ env/
 htmlcov/
 
 # ===== Dados (nunca versionar) =====
-# Arquivos de dados brutos e tratados - nunca subir ao GitHub
+# Arquivos de dados brutos, tratados e exports - nunca subir ao GitHub.
+# ATENÇÃO: em .gitignore o padrão NÃO leva cifrão; "*.csv$" casaria apenas
+# arquivos terminados em ".csv$" e portanto não ignoraria nada.
+*.csv
+*.csv.bak
+*.tsv
+*.xlsx
+*.xls
+*.xlsm
+*.ods
+*.parquet
+*.feather
+*.dta
+*.sav
+
+# Bases específicas do projeto (redundante, mas explícito e legível)
 parquesuspenso-janeiro a maio.csv
 parquesuspenso-janeiro a maio LIMPO.csv
 parquesuspenso-janeiro a maio.csv.bak
 parque_suspenso_tratado.parquet
 parque_suspenso_tratado.csv
 ParqueSuspenso_*.csv
-*.csv$
-*.parquet$
 
-# ===== Seguran�a / Segredos =====
+# ===== Logs e artefatos de runtime =====
 logs/
 *.log
 relatorio_teste.*

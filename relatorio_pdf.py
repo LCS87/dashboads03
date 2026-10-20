@@ -14,17 +14,29 @@ from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 
 from logging_config import configurar_logging
+from tema import (
+    BORDO_ESCURO,
+    CARMESIM,
+    CINZA_FERRUGEM,
+    DOURADO_ENVELHECIDO,
+    PERGAMINHO,
+    TEMA_PADRAO,
+    VERDE_MUSGO,
+    VERMELHO_SANGUE,
+)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 log = configurar_logging("relatorio")
 
-NAVY = colors.HexColor("#0f172a")
-CYAN = colors.HexColor("#0284c7")
-CORAL = colors.HexColor("#e11d48")
-AMBER = colors.HexColor("#d97706")
-GREEN = colors.HexColor("#059669")
-SLATE = colors.HexColor("#475569")
-LIGHT = colors.HexColor("#e2e8f0")
+# Paleta Gótica Vitoriana (fonte única: tema.py)
+NAVY = colors.HexColor(BORDO_ESCURO)            # bordô escuro
+CYAN = colors.HexColor(DOURADO_ENVELHECIDO)     # dourado envelhecido
+CORAL = colors.HexColor(CARMESIM)               # carmesim
+AMBER = colors.HexColor(DOURADO_ENVELHECIDO)    # dourado envelhecido
+GREEN = colors.HexColor(VERDE_MUSGO)            # verde musgo
+SLATE = colors.HexColor(CINZA_FERRUGEM)         # cinza ferrugem
+LIGHT = colors.HexColor(PERGAMINHO)             # pergaminho
+CRIMSON = colors.HexColor(VERMELHO_SANGUE)      # vermelho sangue
 
 AGING_ORDER = [
     "Até 30 dias",
@@ -42,13 +54,36 @@ def _fmt_brl(v: float) -> str:
 
 
 def gerar_pdf(df: pd.DataFrame, ticket_medio: float, ref_label: str,
-              caminho_saida: str | None = None) -> bytes:
+              caminho_saida: str | None = None,
+              tema=None) -> bytes:
     """Compila KPIs e gráficos essenciais em um PDF de 1 página (A4 paisagem).
+
+    Args:
+        df: recorte de linhas a resumir.
+        ticket_medio: ticket médio mensal por linha (R$).
+        ref_label: rótulo do mês de referência exibido no cabeçalho.
+        caminho_saida: caminho opcional para gravar o PDF.
+        tema: tema de exibição (define a paleta do documento). O relatório é
+            sempre impresso em **papel claro**, com contraste WCAG AA.
 
     Returns: bytes do PDF (também salva em caminho_saida se informado).
     """
     if df is None or df.empty:
         raise ValueError("Não há dados no recorte atual para gerar o relatório PDF.")
+
+    # Paleta do documento (papel) — vem do tema para manter a identidade visual
+    t = tema if tema is not None else TEMA_PADRAO
+    NAVY = colors.HexColor(t.pdf_cabecalho)
+    CYAN = colors.HexColor(t.pdf_acento)
+    CORAL = colors.HexColor(t.pdf_alerta)
+    AMBER = colors.HexColor(t.pdf_acento)
+    GREEN = colors.HexColor(t.pdf_positivo)
+    SLATE = colors.HexColor(t.pdf_texto_sec)
+    LIGHT = colors.HexColor(t.pdf_borda)
+    CRIMSON = colors.HexColor(t.pdf_perigo)
+    PAPER = colors.HexColor(t.pdf_fundo)
+    CARD = colors.HexColor(t.pdf_cartao)
+    TRILHO = colors.HexColor(t.pdf_trilho)
 
     df = df.copy()
     total_linhas = len(df)
@@ -95,14 +130,14 @@ def gerar_pdf(df: pd.DataFrame, ticket_medio: float, ref_label: str,
     # ---------- CABEÇALHO ----------
     c.setFillColor(NAVY)
     c.rect(0, h - 78, w, 78, fill=1, stroke=0)
-    c.setFillColor(colors.white)
+    c.setFillColor(PAPER)
     c.setFont("Helvetica-Bold", 20)
     c.drawString(40, h - 42, "Relatório Executivo — Gestão de Parque Suspenso")
     c.setFont("Helvetica", 10)
-    c.setFillColor(colors.HexColor("#94a3b8"))
+    c.setFillColor(SLATE)
     c.drawString(40, h - 60, "Monitoramento Estratégico B2B de Linhas Corporativas Suspensas")
     c.setFont("Helvetica-Bold", 11)
-    c.setFillColor(colors.HexColor("#7dd3fc"))
+    c.setFillColor(CYAN)
     c.drawRightString(w - 40, h - 42, f"Referência: {ref_label}")
     c.setFont("Helvetica", 9)
     c.drawRightString(w - 40, h - 58, f"Emitido em {datetime.now().strftime('%d/%m/%Y %H:%M')}")
@@ -141,7 +176,7 @@ def gerar_pdf(df: pd.DataFrame, ticket_medio: float, ref_label: str,
 
     # ---------- ESQUERDA: MRR em risco por faixa ----------
     painel_x, painel_w = 40, 300
-    c.setFillColor(colors.white)
+    c.setFillColor(CARD)
     c.setStrokeColor(LIGHT)
     c.roundRect(painel_x, PANEL_BOTTOM, painel_w, PANEL_H, 10, fill=1, stroke=1)
     c.setFillColor(NAVY)
@@ -166,7 +201,7 @@ def gerar_pdf(df: pd.DataFrame, ticket_medio: float, ref_label: str,
         c.setFillColor(SLATE)
         c.setFont("Helvetica", 8)
         c.drawString(painel_x + 14, ly, f"{faixa} ({n_linhas} linhas)")
-        c.setFillColor(colors.HexColor("#f1f5f9"))
+        c.setFillColor(TRILHO)
         c.roundRect(painel_x + 14, ly - 14, bar_max, 8, 4, fill=1, stroke=0)
         c.setFillColor(cor)
         frac = (mrr / mrr_risco) if mrr_risco else 0
@@ -185,7 +220,7 @@ def gerar_pdf(df: pd.DataFrame, ticket_medio: float, ref_label: str,
     # ---------- CENTRO: Distribuição por Aging ----------
     centro_x = painel_x + painel_w + 14
     centro_w = 205
-    c.setFillColor(colors.white)
+    c.setFillColor(CARD)
     c.setStrokeColor(LIGHT)
     c.roundRect(centro_x, PANEL_BOTTOM, centro_w, PANEL_H, 10, fill=1, stroke=1)
     c.setFillColor(NAVY)
@@ -201,7 +236,7 @@ def gerar_pdf(df: pd.DataFrame, ticket_medio: float, ref_label: str,
         c.setFillColor(SLATE)
         c.setFont("Helvetica", 7.5)
         c.drawString(centro_x + 12, ly, faixa)
-        c.setFillColor(colors.HexColor("#f1f5f9"))
+        c.setFillColor(TRILHO)
         c.roundRect(centro_x + 12, ly - 13, 108, 7, 3.5, fill=1, stroke=0)
         c.setFillColor(cor)
         c.roundRect(centro_x + 12, ly - 13, max(108 * (n / max_aging), 2), 7, 3.5, fill=1, stroke=0)
@@ -213,7 +248,7 @@ def gerar_pdf(df: pd.DataFrame, ticket_medio: float, ref_label: str,
     # ---------- DIREITA: Top clientes ----------
     dir_x = centro_x + centro_w + 14
     dir_w = w - dir_x - 40
-    c.setFillColor(colors.white)
+    c.setFillColor(CARD)
     c.setStrokeColor(LIGHT)
     c.roundRect(dir_x, PANEL_BOTTOM, dir_w, PANEL_H, 10, fill=1, stroke=1)
     c.setFillColor(NAVY)
@@ -246,7 +281,7 @@ def gerar_pdf(df: pd.DataFrame, ticket_medio: float, ref_label: str,
     c.setFont("Helvetica-Oblique", 7.5)
     c.drawString(40, 72, "Prioridade de ação: Janela de Ouro (0-30d) — recuperação >70% nas primeiras 72h de contato.")
     c.drawString(40, 58, "Faixas 61-90d e >90d configuram zona irreversível de desconexão definitiva por inadimplência (60 a 90 dias).")
-    c.setFillColor(colors.HexColor("#94a3b8"))
+    c.setFillColor(SLATE)
     c.setFont("Helvetica", 7)
     c.drawCentredString(w / 2, 30, "Documento de uso interno para fins executivos. Dados anonimizados — identificadores corporativos removidos.")
 

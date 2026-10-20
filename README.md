@@ -7,7 +7,7 @@
 [![Streamlit](https://img.shields.io/badge/Streamlit-%3E%3D1.40-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
 [![pandas](https://img.shields.io/badge/pandas-%3E%3D2.0-150458?logo=pandas&logoColor=white)](https://pandas.pydata.org/)
 [![NumPy](https://img.shields.io/badge/NumPy-%3E%3D1.24-013243?logo=numpy&logoColor=white)](https://numpy.org/)
-[![pytest](https://img.shields.io/badge/tests-131%20passing-2E7D32?logo=pytest&logoColor=white)](pytest.ini)
+[![pytest](https://img.shields.io/badge/tests-173%20passing-2E7D32?logo=pytest&logoColor=white)](pytest.ini)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](Dockerfile)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -139,7 +139,7 @@ executivo auditável**, com regra explícita para cada número exibido.
 
 > ⚠️ Todos os números abaixo foram **reverificados contra a base tratada** em 19/10/2026
 > (`parque_suspenso_tratado.parquet`, 2.061 registros) e contra a suíte de testes
-> (131 testes coletados, verdes).
+> (173 testes coletados, verdes).
 
 ### 2.1 Base de dados
 
@@ -192,7 +192,7 @@ executivo auditável**, com regra explícita para cada número exibido.
 |---|---|
 | Painéis | **7** (Cockpit, Aging, Top Contas, Geografia, Régua, Rastreador, Todos) |
 | Módulos Python | 8 (`app`, `app_data`, `etl_pipeline`, `rastreador`, `modelo_risco`, `alertas`, `relatorio_pdf`, `logging_config`) |
-| Testes automatizados | **131** pytest (≈ 15 s) |
+| Testes automatizados | **173** pytest (≈ 14 s) |
 | Cobertura funcional | ETL · agregações · alertas (disparo **e** não-disparo) · modelo · rastreador · UI (`AppTest`) |
 | Regras de alerta | **9**, todas com parâmetro explícito e teste |
 | Modelo preditivo | AUC **0,571** (CV) · **0,654** (holdout Abr/2026) · lift **1,58×** no tercil prioritário |
@@ -410,6 +410,30 @@ Complementos:
 - **Verificação automatizada** — teste em `tests/test_etl.py` garante que nenhuma coluna
   anonimizada sobrevive na base tratada (resultado atual: **0 colunas vazando**).
 
+#### 3.7.1 Sanitização das mensagens de cobrança
+
+A anonimização de colunas **não bastava**: as mensagens de cobrança trazidas da origem
+continuavam citando o nome da empresa, o telefone de atendimento e nomes de
+diretores/gerentes — e são exibidas no painel ⚡ Régua de Cobrança.
+
+A sanitização roda em **duas camadas de defesa**:
+
+| Camada | Onde | Efeito |
+|---|---|---|
+| **1. ETL** | `etl_pipeline.sanitizar_mensagem()` | A base tratada **nunca** contém a identificação |
+| **2. Interface** | `app.py` (na exibição) | Protege bases antigas já gravadas |
+
+| O que é substituído | Por | Onde |
+|---|---|---|
+| Nome da empresa (e variantes) | `Telecomunicação S/A` | Mensagens |
+| Telefone de atendimento real | `(00) 00000-0000` | Mensagens |
+| Nomes de diretores/gerentes | `Responsável Comercial` | Mensagens |
+
+O ETL ainda **verifica o resultado** e registra no log se alguma mensagem escapa da
+sanitização (resultado atual: *"nenhuma mensagem da base tratada identifica a
+empresa"*). Testes automatizados cobrem a sanitização **e** verificam a base real em
+disco.
+
 ### 3.8 Definições formais dos indicadores
 
 Todos os indicadores do Cockpit têm definição explícita, para evitar ambiguidade entre
@@ -614,7 +638,7 @@ a cada registro. A escrita é **concorrente-segura** (arquivo temporário + repl
 
 ```bash
 python etl_pipeline.py                       # regera a base tratada a partir da origem
-python -m pytest -q                          # 131 testes, ~15 s
+python -m pytest -q                          # 173 testes, ~14 s
 python -c "from streamlit.testing.v1 import AppTest; at=AppTest.from_file('app.py'); at.run(); print(len(at.exception))"
 ```
 
@@ -685,6 +709,7 @@ documentação**, nunca edição silenciosa de resultado.
 | `modelo_risco.py` | Treinar, validar e aplicar o modelo | Não conhece regras de cobrança |
 | `rastreador.py` | Persistir ações e calcular SLA/conversão | Não altera a base do parque |
 | `relatorio_pdf.py` | Renderizar o PDF executivo | Não consulta a base (recebe DataFrame) |
+| `tema.py` | Paleta, temas, CSS dinâmico e template Plotly | Não contém regra de negócio nem dados |
 | `logging_config.py` | Logging estruturado + mascaramento | Não contém regra de negócio |
 
 ### 4.3 Decisões de projeto relevantes
@@ -701,9 +726,109 @@ documentação**, nunca edição silenciosa de resultado.
 
 ---
 
+### 3.14 Tema visual e acessibilidade (WCAG 2.1)
+
+O tema vive **exclusivamente** em [`tema.py`](tema.py) — nenhuma cor está hard-coded no
+`app.py`. Trocar ou recalibrar a identidade visual é, portanto, uma alteração em um
+único lugar.
+
+#### 3.14.1 Paleta da marca
+
+| Elemento | Cor | Hex | Uso |
+|---|---|---|---|
+| Background principal | Preto carvão | `#0D0D0D` | Fundo da aplicação |
+| Cards / Sidebar | Bordô escuro | `#1A0A0A` | Cartões e barra lateral |
+| Acento primário | Vermelho sangue | `#8B0000` | Botões, gradiente do título, status de inadimplência |
+| Acento secundário | Dourado envelhecido | `#B8860B` | Títulos, rótulos, bordas de destaque |
+| Texto principal | Pergaminho | `#E8DCC8` | Títulos e valores |
+| Texto secundário | Cinza ferrugem | `#8B7D6B` | Rótulos e legendas |
+| Alerta / risco | Carmesim | `#DC143C` | Alertas críticos, aging > 60 dias |
+| Sucesso / positivo | Verde musgo | `#2E4A2E` | Alertas positivos, aging 0–30 dias |
+
+#### 3.14.2 Dois temas, uma identidade
+
+| | 🌙 Gótico Vitoriano (escuro) | ☀️ Pergaminho (claro) |
+|---|---|---|
+| Fundo | Preto carvão `#0D0D0D` | Papel envelhecido `#F3EBDC` |
+| Card | Bordô escuro `#1A0A0A` | Marfim `#FCF8EF` |
+| Texto | Pergaminho `#E8DCC8` | Tinta sepia `#2A1E14` |
+| Acento | Dourado `#B8860B` | Ouro escuro `#876207` |
+| Rampa sequencial | `#45211F → #8B0000 → #D4AF37` | `#E5D8B6 → #B8860B → #5C0011` |
+| Ideal para | Sala de controle, apresentação noturna, projeção | Impressão, relatório, ambientes claros |
+
+A troca é feita na **sidebar** (`🎨 Tema de exibição`) e vale **imediatamente**, sem
+reiniciar o servidor — o CSS é regenerado a cada rerun e os gráficos Plotly recebem as
+cores do tema ativo.
+
+> **Rampas sequenciais vitorianas:** substituem as escalas padrão do Plotly
+> (`Blues`, `Teal`, `RdBu_r`, `Reds`, `Blugrn`, `Bluyl`), que introduziam azuis
+> destoantes da identidade visual. A rampa é **monotônica em luminância**, o que
+> preserva a leitura ordinal da escala.
+
+#### 3.14.3 Acessibilidade: o que foi corrigido
+
+A paleta original do briefing falhava em pontos críticos. A auditoria mediu **todos** os
+pares de cor realmente usados na interface:
+
+| Par (uso real) | Antes | Correção | Agora |
+|---|---:|---|---:|
+| Verde musgo como **texto** (`.delta-negative`) | 1,96:1 ❌ | variante de mesmo matiz `#548654` | **4,50:1** ✅ |
+| Vermelho sangue como **texto** (faixa extrema) | 1,92:1 ❌ | variante `#CC5555` | **4,58:1** ✅ |
+| Carmesim como **texto** (`.delta-positive`) | 3,85:1 ⚠️ | variante `#EB264E` | **4,51:1** ✅ |
+| Verde musgo como **borda/barra** | 1,96:1 ❌ | variante `#548654` | **4,50:1** ✅ |
+| Pergaminho sobre cinza ferrugem | 2,96:1 ❌ | cinza nunca usado como fundo | — |
+| Ouro do PDF sobre branco | 3,25:1 ⚠️ | ouro escuro `#876207` | **4,69:1** ✅ |
+| Cinza ferrugem no PDF sobre branco | 4,00:1 ⚠️ | `#817463` | **4,55:1** ✅ |
+
+**Regra adotada:** a paleta da marca é preservada como **preenchimento, borda e acento
+gráfico**; quando a cor vira **texto** sobre fundo escuro, usa-se uma variante de
+**mesmo matiz e mesma saturação** com luminosidade ajustada até atingir ≥ 4,5:1.
+Os contrastes são **verificados por teste automatizado** — uma regressão de cor
+quebre a suíte.
+
+| Critério WCAG 2.1 | Exigência | Status |
+|---|---|:---:|
+| Texto normal (≤ 18,66 px) | ≥ 4,5:1 | ✅ AA |
+| Texto grande (> 18,66 px ou 14 pt bold) | ≥ 3,0:1 | ✅ AA |
+| Elementos gráficos e bordas (1.4.11) | ≥ 3,0:1 | ✅ AA |
+| Rampa sequencial: base distinguível do card | ≥ 1,3:1 | ✅ |
+| PDF (impresso sobre papel) | ≥ 4,5:1 | ✅ AA |
+
+> **Nota sobre cor como sinal:** os alertas da Central sempre acompanham o
+> **nível por texto** (`CRÍTICO`, `ATENÇÃO`, `POSITIVO`) e a **regra em texto** — a cor
+> nunca é o único meio de transmissão da informação.
+
+---
+
 <a id="sec-5"></a>
 
 ## 5. Instalação e Operação
+
+### 5.0 Provisionamento dos dados (importante)
+
+> ⚠️ **Os arquivos de dados não estão no GitHub — por decisão de segurança.**
+> Nenhum `.csv`, `.xlsx` ou `.parquet` é versionado (o `.gitignore` bloqueia
+> `*.csv`, `*.xlsx`, `*.xls`, `*.parquet` e afins). Um clone do repositório
+> **não** traz a base: ela precisa ser **provisionada** pela área responsável.
+
+| Arquivo | Origem | Passo |
+|---|---|---|
+| `ParqueSuspenso_<mês>.csv` | Extração mensal do sistema de origem | Salvar na pasta do projeto |
+| `parquesuspenso-janeiro a maio.csv` | Consolidado Jan–Mai/2026 | Salvar na pasta do projeto |
+| `parque_suspenso_tratado.parquet` / `.csv` | **Gerado pelo ETL** | `python etl_pipeline.py` |
+| `acoes_recuperacao.csv` | Criado no 1º registro de ação | Automático |
+
+```bash
+# 1. provisionar os CSVs de origem na pasta do projeto
+# 2. regenerar a base tratada
+python etl_pipeline.py
+# 3. subir o painel
+python -m streamlit run app.py --server.port 8503
+```
+
+> O ETL é **idempotente** e detecta novos meses automaticamente, de modo que a
+> operação mensal consiste em: salvar o CSV do mês → abrir o painel → conferir os
+> alertas.
 
 ### 5.1 Pré-requisitos
 
@@ -725,6 +850,14 @@ iniciar_dashboard.bat
 O script verifica/instala dependências, detecta novos meses, executa o ETL se necessário e
 sobe o painel em **http://localhost:8503**.
 
+**Porta ocupada:** o script detecta que a porta já está em uso, **encerra a instância
+anterior** do dashboard e segue. Se o processo não responder, orienta a usar outra porta:
+
+```bat
+iniciar_dashboard.bat 8600     # sobe em http://localhost:8600
+iniciar_dashboard.bat service  # sobe como serviço do Windows
+```
+
 ### 5.3 Opção 2 — manual
 
 ```bash
@@ -732,6 +865,24 @@ pip install -r requirements.txt
 python etl_pipeline.py          # gera as bases tratadas
 python -m streamlit run app.py --server.port 8503
 ```
+
+### 5.3.1 Ambiente isolado (venv) — recomendado
+
+Um `venv` evita conflito de versões com outros projetos da máquina:
+
+```powershell
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt        # runtime
+pip install -r requirements-dev.txt    # runtime + testes
+python etl_pipeline.py
+python -m streamlit run app.py --server.port 8503
+```
+
+> **Versões testadas:** Python 3.11 · streamlit 1.66 · pandas 2.x/3.0 · numpy 2.4 ·
+> plotly 7.1 · pyarrow 26 · reportlab 5.0. O `requirements.txt` traz **limites
+> superiores** (`pandas<4`, `numpy<3`, `plotly<8`…) para evitar saltos de versão
+> principal com mudanças incompatíveis. A suíte roda verde em todas elas.
 
 ### 5.4 Opção 3 — Docker (recomendada para servidor)
 
@@ -1061,7 +1212,7 @@ Para evitar leitura equivocada em apresentações para a diretoria:
 
 ```bash
 pip install -r requirements-dev.txt
-python -m pytest                # 131 testes, ~15 s
+python -m pytest                # 173 testes, ~14 s
 python -m pytest -m "not ui"     # só os rápidos (sem AppTest)
 python -m pytest --collect-only  # apenas listar (1,2 s)
 ```
@@ -1075,9 +1226,10 @@ python -m pytest --collect-only  # apenas listar (1,2 s)
 | `tests/test_rastreador.py` | Persistência append-only, IDs sequenciais, validação de campos, KPIs, SLA por faixa, séries por canal/operador/semana e recuperação observada | 23 |
 | `tests/test_app_data.py` | KPIs, faixas de risco, MRR por faixa, ordenação canônica, histórico mensal, Pareto de clientes, geo UF/DDD, qualidade e geração de PDF | 17 |
 | `tests/test_alertas.py` | Séries mensais (MoM, média móvel, MRR), disparo **e não-disparo** de cada regra, ordenação por severidade, resumo por nível e tolerância a base vazia | 20 |
-| `tests/test_app.py` | Smoke de UI com `AppTest`: carga inicial, os **7 painéis**, "Todos os Painéis", filtros globais e o formulário do Rastreador (erro e sucesso) | 15 |
+| `tests/test_sanitizacao_e_tema.py` | Sanitização de mensagens (empresa, telefone, nomes de pessoas), base real em disco, **contrastes WCAG 2.1** dos dois temas, rampas monotônicas e **regressão do bug de renderização** do botão do WhatsApp | 39 |
+| `tests/test_app.py` | Smoke de UI com `AppTest`: carga inicial, os **7 painéis**, "Todos os Painéis", filtros globais, formulário do Rastreador (erro e sucesso), **troca de tema** e botão do WhatsApp | 17 |
 
-> Total: **131 testes**. Os testes são **herméticos** — as fixtures redirecionam a
+> Total: **173 testes**. Os testes são **herméticos** — as fixtures redirecionam a
 > persistência do rastreador para diretórios temporários e fazem backup/restore de
 > `acoes_recuperacao.csv`, sem tocar nos dados reais.
 
@@ -1132,7 +1284,7 @@ Todas as rodadas abaixo foram executadas e validadas em **18–19/10/2026**.
 | 5 | 19/10/2026 | **Correção do pico de Abril**: deduplicação no ETL (`REMOVER_DUPLICATAS_EXATAS`) | 3.071 → **2.061** registros; Abril 1.519 → **509**; 0 duplicatas |
 | 6 | 19/10/2026 | **README** (documentação central) + limpeza do diretório (`.xlsx` vazio e `__pycache__` removidos) | Nenhum arquivo órfão; README referenciando todos os artefatos |
 | 7 | 19/10/2026 | **Rastreador Nominal de Recuperação** (`rastreador.py` + painel 📞) | 9/9 cenários do painel sem exceção; SLA por faixa implementado |
-| 8 | 19/10/2026 | **Suíte de testes** (`tests/`, `pytest.ini`, `requirements-dev.txt`) | 100% verde; hoje **131 testes** |
+| 8 | 19/10/2026 | **Suíte de testes** (`tests/`, `pytest.ini`, `requirements-dev.txt`) | 100% verde; hoje **173 testes** |
 | 9 | 19/10/2026 | **Containerização** (Dockerfile multi-estágio, compose, entrypoint) | Build OK; contêiner `healthy`; escrita em bind mount validada como uid 1000 |
 | 10 | 19/10/2026 | **Qualidade de código**: type hints, docstrings, `CONTRIBUTING.md`, `CHANGELOG.md` | Type hints em 100% das funções públicas auditadas |
 | 11 | 19/10/2026 | **Análise preditiva** (`modelo_risco.py` + seção 🤖) | AUC ≈ 0,57 (CV) / 0,65 (holdout); lift 1,58×; bug de AUC invertida e de vazamento corrigidos |
@@ -1159,7 +1311,7 @@ gantt
     "Análise preditiva (ML)"    :done, r11, 2026-10-19, 1d
     Alertas e tendências        :done, r12, 2026-10-19, 1d
     section Engineering
-    "Suíte de testes (131)"     :done, r8, 2026-10-19, 1d
+    "Suíte de testes (173)"     :done, r8, 2026-10-19, 1d
     Docker                     :done, r9, 2026-10-19, 1d
     CI/CD + serviço Windows    :done, r13, 2026-10-19, 1d
     Documentação               :done, r6, 2026-10-19, 1d
@@ -1258,10 +1410,15 @@ flowchart LR
 | ✅ Concluído | Média | **Exportação de Relatório Executivo em PDF** — A4 paisagem, 1 página |
 | ✅ Concluído | Média | **Metas e SLAs de Recuperação** — metas configuráveis + normalização MoM |
 | ✅ Concluído | Baixa | **Higienização da Anonimização** — exclusão efetiva dos identificadores corporativos |
-| ✅ Concluído | Baixa | **Suíte de Testes Automatizados** — 131 testes, fixtures herméticas |
+| ✅ Concluído | Baixa | **Suíte de Testes Automatizados** — 173 testes, fixtures herméticas |
 | ✅ Concluído | Baixa | **Containerização (Docker)** — multi-estágio, usuário não-root, healthcheck |
 | ✅ Concluído | Baixa | **Qualidade de Código e Documentação** — type hints, `CONTRIBUTING.md`, `CHANGELOG.md` |
 | ✅ Concluído | Baixa | **CI/CD e serviço Windows** — workflow pronto; instalador NSSM/`sc` |
+| ✅ Concluído | Alta | **Tema Gótico Vitoriano + Tema Pergaminho** — `tema.py` como fonte única, troca em tempo de execução, rampas sequenciais vitorianas no lugar das escalas azuis do Plotly |
+| ✅ Concluído | Alta | **Auditoria de acessibilidade (WCAG 2.1)** — 12 falhas de contraste corrigidas (verde musgo e vermelho sangue como texto ficavam em ~1,9:1) e verificadas por teste |
+| ✅ Concluído | Alta | **Sanitização de mensagens** — nome da empresa, telefone de atendimento e nomes de pessoas substituídos em duas camadas (ETL + interface) |
+| ✅ Concluído | Alta | **Dados fora do versionamento** — `.gitignore` corrigido (`*.csv$` não ignorava nada) e CSVs removidos do índice do Git |
+| ✅ Concluído | Média | **Correção do botão do WhatsApp** — o cartão de acionamento era renderizado como bloco de código; agora usa linha única e `st.link_button` |
 | 🔜 **Pendente** | **Média** | **Decidir sobre o aging de Abr/2026** — reextrair na origem × ligar `NORMALIZAR_AGING_POR_REFERENCIA` |
 | 🔜 Pendente | Média | **Calibrar o ticket médio** com o Financeiro (hoje R$ 45 é um palpite) |
 | 🔜 Pendente | Média | **Piloto do Rastreador** com a operação de cobrança |
@@ -1284,7 +1441,9 @@ flowchart LR
 | "Erro ao ler arquivo" | Encoding do CSV | O ETL tenta utf-8-sig, latin1 e cp1252 automaticamente |
 | PDF não gera | `reportlab` ausente | `pip install reportlab` |
 | Novo mês não aparece | Nome do arquivo fora do padrão | Renomear para `ParqueSuspenso_<mês>.csv` |
-| Porta 8503 ocupada | Outra instância ativa | Fechar a anterior ou trocar `--server.port` |
+| Porta 8503 ocupada | Outra instância ativa | `iniciar_dashboard.bat` **encerra a instância anterior** automaticamente; manualmente: `netstat -ano \| findstr :8503` e `taskkill /PID <pid> /F`, ou use outra porta (`iniciar_dashboard.bat 8600`) |
+| "Port 8503 is not available" ao rodar `streamlit run` direto | Instância antiga do painel ainda no ar | `iniciar_dashboard.bat` (resolve sozinho) ou encerre o processo da porta |
+| `ImportError` ao iniciar o app | `__pycache__` desatualizado após mudança de código | Apague `__pycache__/` e reinicie: `Remove-Item -Recurse -Force __pycache__` |
 | `docker compose up` falha no build | Sem acesso à internet/proxy | O build precisa baixar `python:3.11-slim` e as dependências |
 | Contêiner reinicia em loop | Falha no ETL dentro do entrypoint | `docker compose logs ParqueSuspenso` |
 | Permissão negada ao gravar CSV | Bind mount com dono diferente | O compose mapeia corretamente em Docker Desktop/WSL2 (validado) |
@@ -1306,12 +1465,16 @@ flowchart LR
 | Aspecto | Implementação |
 |---|---|
 | **Identificadores corporativos** | `DEALEAR`, `CD_DEALER`, `NOME_DIRETOR`, `NOME_DIVISAO` descartados **na gravação** |
-| **Credenciais** | Nenhuma no repositório — sem `.env`, `secrets.toml` ou chaves de API |
+| **Nome da empresa** | Substituído por `Telecomunicação S/A` nas mensagens — em duas camadas (ETL + interface) |
+| **Nomes de pessoas** | Diretores/gerentes substituídos por `Responsável Comercial` nas mensagens |
+| **Telefone de atendimento** | Número real substituído por `(00) 00000-0000` nas mensagens |
+| **Dados brutos** | **Nenhum `.csv`/`.xlsx`/`.parquet` versionado** — `.gitignore` + remoção do índice do Git |
+| **Credenciais** | Nenhuma no repositório - sem `.env`, `secrets.toml` ou chaves de API |
 | **Logs** | Telefone e CNPJ mascarados por `mascarar()` |
 | **Segredos** | `.gitignore` cobre `secrets.toml`, chaves, `.env`, caches e artefatos gerados |
 | **Histórico do Rastreador** | `acoes_recuperacao.csv` é local e **não versionado**; guarda o telefone porque é a chave operacional da linha |
 | **Contêiner** | Usuário não-root (uid 1000), `HEALTHCHECK`, bind mount somente do diretório do projeto |
-| **Autenticação** | ⚠️ **Não implementada** — ver [8.5](#85-limitações-operacionais-e-de-engenharia) (O1) |
+| **Autenticação** | ⚠️ **Não implementada** - ver [8.5](#85-limitações-operacionais-e-de-engenharia) (O1) |
 
 ---
 
@@ -1380,7 +1543,7 @@ python -m pytest                # suíte completa
 <div align="center">
 
 **Cockpit Executivo — Gestão de Parque Suspenso**
-Base Jan–Mai/2026 · 2.061 linhas · 821 clientes · 15 UFs · 131 testes · 7 painéis
+Base Jan–Mai/2026 · 2.061 linhas · 821 clientes · 15 UFs · 173 testes · 7 painéis
 
 *Documento gerado e verificado contra a base tratada em 19/10/2026.*
 *Os números desta documentação foram conferidos programaticamente — ver 10.3.*

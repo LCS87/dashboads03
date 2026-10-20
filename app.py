@@ -10,6 +10,14 @@ from datetime import datetime
 import app_data as ad
 import rastreador as rt
 from logging_config import configurar_logging, mascarar
+from tema import (
+    NOME_EMPRESA,
+    TEMA_ESCURO,
+    TEMAS,
+    css_tema,
+    obter_tema,
+    template_plotly,
+)
 
 log = configurar_logging("app")
 
@@ -26,175 +34,53 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Estilização CSS Moderna e Executiva (Dark Theme Corporativo)
-st.markdown("""
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
-    
-    html, body, [class*="css"] {
-        font-family: 'Plus Jakarta Sans', sans-serif;
-    }
-    
-    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
-        background-color: #0b0f19 !important;
-        color: #f1f5f9 !important;
-    }
-    
-    .main, [data-testid="stMainBlockContainer"] {
-        background-color: #0b0f19 !important;
-        color: #f1f5f9 !important;
-    }
-    
-    /* Top Header */
-    .header-box {
-        background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 16px;
-        padding: 24px 28px;
-        margin-bottom: 24px;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-        backdrop-filter: blur(12px);
-    }
-    .header-title {
-        font-size: 26px;
-        font-weight: 800;
-        letter-spacing: -0.5px;
-        background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin: 0;
-    }
-    .header-sub {
-        color: #94a3b8;
-        font-size: 13.5px;
-        margin-top: 6px;
-        display: flex;
-        gap: 20px;
-        flex-wrap: wrap;
-    }
-    .header-badge {
-        background: rgba(56, 189, 248, 0.12);
-        color: #38bdf8;
-        padding: 3px 10px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-        border: 1px solid rgba(56, 189, 248, 0.25);
-    }
-    
-    /* KPI Metric Cards */
-    .metric-card {
-        background: linear-gradient(145deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
-        border: 1px solid rgba(255, 255, 255, 0.07);
-        border-radius: 14px;
-        padding: 20px;
-        transition: transform 0.2s ease, border-color 0.2s ease;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    }
-    .metric-card:hover {
-        transform: translateY(-2px);
-        border-color: rgba(56, 189, 248, 0.4);
-    }
-    .metric-label {
-        font-size: 12.5px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-        color: #94a3b8;
-        margin-bottom: 8px;
-    }
-    .metric-value {
-        font-size: 32px;
-        font-weight: 800;
-        color: #f8fafc;
-        line-height: 1.1;
-    }
-    .metric-delta {
-        font-size: 12.5px;
-        font-weight: 600;
-        margin-top: 8px;
-    }
-    .delta-positive { color: #f43f5e; }
-    .delta-negative { color: #10b981; }
-    .delta-neutral { color: #38bdf8; }
-    
-    /* Sidebar styling */
-    [data-testid="stSidebar"] {
-        background-color: #0f172a;
-        border-right: 1px solid rgba(255, 255, 255, 0.06);
-    }
-    
-    /* Tabs */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background-color: rgba(15, 23, 42, 0.6);
-        padding: 6px;
-        border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-    }
-    .stTabs [data-baseweb="tab"] {
-        border-radius: 8px;
-        color: #94a3b8;
-        font-weight: 600;
-        font-size: 13.5px;
-        padding: 10px 18px;
-        transition: all 0.2s;
-    }
-    .stTabs [aria-selected="true"] {
-        background: linear-gradient(90deg, #2563eb, #3b82f6) !important;
-        color: #ffffff !important;
-    }
-    
-    /* Table styling */
-    [data-testid="stDataFrame"] {
-        border-radius: 12px;
-        overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.06);
-    }
+# ================= SELETOR DE TEMA =================
+# Renderizado antes do CSS para que a troca de tema valha já no mesmo rerun.
+with st.sidebar:
+    _nomes_tema = list(TEMAS.keys())
+    # Semeia o estado do widget apenas na primeira execução. Usar `default=`
+    # junto com `key=` faria o Streamlit reescrever a seleção do usuário a
+    # cada rerun, impedindo a troca de tema.
+    if "tema_pills" not in st.session_state:
+        st.session_state["tema_pills"] = st.session_state.get("tema_nome", TEMA_ESCURO.nome)
+    _escolha = st.pills(
+        "🎨 Tema de exibição",
+        _nomes_tema,
+        format_func=lambda n: f"{TEMAS[n].emoji}  {TEMAS[n].rotulo}",
+        selection_mode="single",
+        key="tema_pills",
+        help="Alterna entre o tema Gótico Vitoriano (escuro) e o tema Pergaminho (claro).",
+    )
+    st.session_state["tema_nome"] = _escolha if _escolha in TEMAS else TEMA_ESCURO.nome
 
-    /* Central de Alertas */
-    .alert-card {
-        border-radius: 12px;
-        padding: 14px 16px;
-        margin-bottom: 10px;
-        background: rgba(15, 23, 42, 0.75);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        border-left-width: 5px;
-        border-left-style: solid;
-    }
-    .alert-critico  { border-left-color: #f43f5e; }
-    .alert-atencao  { border-left-color: #f59e0b; }
-    .alert-positivo { border-left-color: #10b981; }
-    .alert-info     { border-left-color: #38bdf8; }
-    .alert-title {
-        font-size: 14.5px;
-        font-weight: 700;
-        color: #f1f5f9;
-        margin: 0 0 4px 0;
-    }
-    .alert-detail {
-        font-size: 13px;
-        color: #cbd5e1;
-        margin: 0;
-        line-height: 1.5;
-    }
-    .alert-meta {
-        font-size: 11.5px;
-        color: #64748b;
-        margin-top: 6px;
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    }
-    .alert-badge {
-        float: right;
-        font-size: 11.5px;
-        font-weight: 700;
-        padding: 3px 9px;
-        border-radius: 999px;
-        background: rgba(56, 189, 248, 0.12);
-        color: #7dd3fc;
-    }
-</style>
-""", unsafe_allow_html=True)
+tema = obter_tema(st.session_state.get("tema_nome", TEMA_ESCURO.nome))
+
+# Atalhos das cores do tema para uso nos blocos HTML do app
+COR_TEXTO = tema.texto
+COR_TEXTO_SEC = tema.texto_sec
+COR_ACENTO = tema.acento
+COR_ALERTA = tema.alerta
+COR_POSITIVO = tema.positivo
+COR_PERIGO = tema.perigo
+COR_CARD = tema.card
+COR_FUNDO = tema.fundo
+COR_BORDA = tema.borda
+COR_BORDA_FORTE = tema.borda_forte
+
+# Estilização CSS — gerada a partir do tema ativo
+st.markdown(css_tema(tema), unsafe_allow_html=True)
+
+
+def _plot(fig, **kwargs):
+    """Exibe um grafico Plotly ja com o tema ativo aplicado.
+
+    O tema e aplicado como propriedade EXPLICITA do layout (e nao apenas via
+    `template`), porque o Plotly mescla o template com o template padrao e o
+    padrao pode prevalecer — o que deixava os rotulos dos eixos com a cor
+    clara do Plotly, invisivel no tema claro.
+    """
+    from tema import aplicar_tema
+    return st.plotly_chart(aplicar_tema(fig, tema), **kwargs)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -280,11 +166,11 @@ MESES_ORDEM = _map_meses['REFERENCIA_LABEL'].tolist()
 
 # ================= SIDEBAR: FILTROS GLOBAIS =================
 with st.sidebar:
-    st.markdown("""
+    st.markdown(f"""
         <div style="text-align: center; padding: 10px 0 20px 0;">
             <div style="font-size: 32px;">📡</div>
-            <div style="font-weight: 800; font-size: 18px; color: #f8fafc; letter-spacing: -0.3px;">PARQUE SUSPENSO</div>
-            <div style="font-size: 11px; color: #38bdf8; font-weight: 600;">COCKPIT EXECUTIVO B2B</div>
+            <div style="font-weight: 800; font-size: 18px; color: {COR_TEXTO}; letter-spacing: -0.3px;">PARQUE SUSPENSO</div>
+            <div style="font-size: 11px; color: {COR_ACENTO}; font-weight: 600;">COCKPIT EXECUTIVO B2B</div>
         </div>
     """, unsafe_allow_html=True)
     
@@ -364,8 +250,8 @@ with st.sidebar:
             except Exception as u_prob:
                 st.error(f"Falha na atualização: {u_prob}")
     
-    st.markdown("""
-        <div style="font-size: 11px; color: #64748b;">
+    st.markdown(f"""
+        <div style="font-size: 11px; color: {COR_TEXTO_SEC};">
             <b>Módulo:</b> Monitoramento & Recuperação B2B<br>
             <b>Cobertura:</b> Linhas Corporativas Ativas<br>
             <b>Atualização:</b> Base Consolidada 2026
@@ -413,7 +299,7 @@ st.markdown(f"""
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
             <span class="header-badge">Filtro Ativo: {selected_ref}</span>
-            <span class="header-badge" style="background: rgba(16, 185, 129, 0.12); color: #10b981; border-color: rgba(16, 185, 129, 0.25);">
+            <span class="header-badge" style="background: {COR_BORDA}; color: {COR_POSITIVO}; border-color: {COR_BORDA};">
                 {len(df_filtered):,} Linhas Filtradas
             </span>
         </div>
@@ -503,6 +389,7 @@ def gerador_acionamento(df_recorte: pd.DataFrame) -> None:
     # Limpar telefone e escapar HTML (evita quebra/injeção de layout com dados de cadastro)
     import urllib.parse
     import html as _html
+    from etl_pipeline import sanitizar_mensagem
     tel_clean = re.sub(r"\D", "", str(sub_act.get("NUMTELEFONE_STR", "")))
     cliente_txt = _html.escape(str(sub_act["CLIENTE"]))
     cnpj_txt = _html.escape(str(sub_act.get("CNPJ_FORMATADO", "N/I")))
@@ -515,30 +402,27 @@ def gerador_acionamento(df_recorte: pd.DataFrame) -> None:
     ) if len(tel_clean) >= 10 else None
 
     if link_wa:
-        acao_html = f"""
-            <a href="{link_wa}" target="_blank" style="background: #10b981; color: white; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 13px;">
-                💬 Abrir Conversa no WhatsApp
-            </a>"""
+        # Botão nativo do Streamlit: imune ao parser de Markdown e herda o tema.
+        st.link_button("💬 Abrir Conversa no WhatsApp", link_wa, type="primary")
     else:
         log.warning("Cliente '%s' sem telefone válido para acionamento (tel=%s).",
                     sel_cli_act, mascarar(tel_clean) if tel_clean else "vazio")
-        acao_html = """
-            <span style="background: rgba(244, 63, 94, 0.15); color: #f43f5e; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 13px; border: 1px solid rgba(244, 63, 94, 0.3);">
-                ⚠️ Telefone inválido/ausente — acionamento manual necessário
-            </span>"""
+        st.warning("⚠️ Telefone inválido/ausente — acionamento manual necessário.")
 
-    st.markdown(f"""
-    <div style="background: rgba(30, 41, 59, 0.6); padding: 20px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08);">
-        <div style="font-weight: 700; color: #38bdf8; font-size: 16px;">{cliente_txt}</div>
-        <div style="color: #94a3b8; font-size: 13px; margin-bottom: 12px;">CNPJ: {cnpj_txt} | UF: {uf_txt} | Telefone: {tel_exibicao}</div>
-        <div style="background: rgba(15, 23, 42, 0.8); padding: 14px; border-radius: 8px; border-left: 3px solid #10b981; font-size: 13px; color: #e2e8f0; margin-bottom: 15px;">
-            {msg_exibicao}
-        </div>
-        <div style="display: flex; gap: 10px;">
-            {acao_html}
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # Cartão em LINHA ÚNICA: sem indentação e sem linha em branco no meio.
+    # Em Markdown, linha indentada 4+ espaços vira bloco de código e linha em branco
+    # encerra o bloco HTML — qualquer um dos dois faz o HTML aparecer como texto literal.
+    cartao = (
+        f'<div style="background: {COR_CARD}; padding: 20px; border-radius: 12px; '
+        'border: 1px solid {COR_BORDA}; border-top: 2px solid {COR_BORDA_FORTE};">'
+        f'<div style="font-weight: 700; color: {COR_ACENTO}; font-size: 16px;">{cliente_txt}</div>'
+        f'<div style="color: {COR_TEXTO_SEC}; font-size: 13px; margin-bottom: 12px;">'
+        f'CNPJ: {cnpj_txt} | UF: {uf_txt} | Telefone: {tel_exibicao}</div>'
+        '<div style="background: {COR_FUNDO}; padding: 14px; border-radius: 8px; '
+        'border-left: 3px solid {COR_ACENTO}; font-size: 13px; color: {COR_TEXTO}; margin-bottom: 15px;">'
+        f'{msg_exibicao}</div></div>'
+    )
+    st.markdown(cartao, unsafe_allow_html=True)
 
 @st.fragment
 def registrar_acao_form(df_recorte: pd.DataFrame, acoes: pd.DataFrame) -> None:
@@ -653,7 +537,7 @@ if ativo("cockpit"):
         st.markdown(f"""
         <div class="metric-card">
             <div class="metric-label">Linhas Suspensas</div>
-            <div class="metric-value" style="color: #38bdf8;">{total_linhas:,}</div>
+            <div class="metric-value" style="color: {COR_ACENTO};">{total_linhas:,}</div>
             <div class="metric-delta {delta_class}">{delta_linhas_str}</div>
         </div>
         """, unsafe_allow_html=True)
@@ -671,7 +555,7 @@ if ativo("cockpit"):
         st.markdown(f"""
         <div class="metric-card">
             <div class="metric-label">Taxa Inadimplência</div>
-            <div class="metric-value" style="color: #f59e0b;">{pct_inadimp:.1f}%</div>
+            <div class="metric-value" style="color: {COR_ACENTO};">{pct_inadimp:.1f}%</div>
             <div class="metric-delta delta-neutral">{total_inadimp:,} linhas em débito</div>
         </div>
         """, unsafe_allow_html=True)
@@ -680,7 +564,7 @@ if ativo("cockpit"):
         st.markdown(f"""
         <div class="metric-card">
             <div class="metric-label">Aging Crítico (&gt;60d)</div>
-            <div class="metric-value" style="color: #f43f5e;">{pct_critico:.1f}%</div>
+            <div class="metric-value" style="color: {COR_ALERTA};">{pct_critico:.1f}%</div>
             <div class="metric-delta delta-positive">{linhas_criticas:,} em risco iminente</div>
         </div>
         """, unsafe_allow_html=True)
@@ -689,16 +573,16 @@ if ativo("cockpit"):
         st.markdown(f"""
         <div class="metric-card">
             <div class="metric-label">Tempo Médio Suspenso</div>
-            <div class="metric-value" style="color: #a855f7;">{tempo_medio:.0f} <span style="font-size: 16px;">dias</span></div>
+            <div class="metric-value" style="color: {COR_PERIGO};">{tempo_medio:.0f} <span style="font-size: 16px;">dias</span></div>
             <div class="metric-delta delta-neutral">Por linha bloqueada</div>
         </div>
         """, unsafe_allow_html=True)
 
     with c6:
         st.markdown(f"""
-        <div class="metric-card" style="border-bottom: 3px solid #f43f5e;">
+        <div class="metric-card" style="border-bottom: 3px solid {COR_ALERTA};">
             <div class="metric-label">💰 MRR em Risco</div>
-            <div class="metric-value" style="color: #f43f5e; font-size: 27px;">{fmt_brl(mrr_risco)}</div>
+            <div class="metric-value" style="color: {COR_ALERTA}; font-size: 27px;">{fmt_brl(mrr_risco)}</div>
             <div class="metric-delta delta-positive">Ticket {fmt_brl(ticket_medio)}/linha · {fmt_brl(mrr_risco_ano)}/ano</div>
         </div>
         """, unsafe_allow_html=True)
@@ -734,14 +618,14 @@ if ativo("cockpit"):
             title=None,
             barmode='stack',
             color_discrete_map={
-                'INADIMPLENTE': '#3b82f6',
-                'SUSPENSAO PARCIAL POR FRAUDE': '#f43f5e',
-                'SUSPENSAO TOTAL POR PERDA/ROUBO': '#eab308',
-                'SUSPENSAO A PEDIDO': '#10b981'
+                'INADIMPLENTE': tema.perigo,
+                'SUSPENSAO PARCIAL POR FRAUDE': tema.alerta,
+                'SUSPENSAO TOTAL POR PERDA/ROUBO': tema.acento,
+                'SUSPENSAO A PEDIDO': tema.positivo
             }
         )
         fig_hist.update_layout(
-            template='plotly_dark',
+            template=template_plotly(tema),
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             margin=dict(l=0, r=0, t=20, b=0),
@@ -760,30 +644,24 @@ if ativo("cockpit"):
                 text=f"Pico de Volume ({pico_val:,} linhas)".replace(",", "."),
                 showarrow=True,
                 arrowhead=2,
-                arrowcolor="#f43f5e",
+                arrowcolor=tema.alerta,
                 arrowsize=1,
                 arrowwidth=2,
                 ax=0,
                 ay=-40,
-                font=dict(size=11, color="#f87171"),
-                bgcolor="rgba(15, 23, 42, 0.9)",
-                bordercolor="#f43f5e"
+                font=dict(size=11, color=tema.alerta),
+                bgcolor=tema.card,
+                bordercolor=tema.alerta
             )
-        st.plotly_chart(fig_hist, width='stretch')
+        _plot(fig_hist, width='stretch')
         
     with col_chart2:
         st.markdown("#### 🍩 Distribuição por Faixa de Aging")
         aging_counts = ad.contagens(df_filtered, 'AGING_LIMPO')
         aging_counts.columns = ['AGING', 'CONTAGEM']
         
-        # Cores para cada aging
-        aging_colors = {
-            'Até 30 dias': '#10b981',       # Verde
-            'De 31 a 60 dias': '#38bdf8',   # Azul
-            'De 61 a 90 dias': '#f59e0b',   # Âmbar
-            'De 91 a 120 dias': '#f97316',  # Laranja
-            'Maior que 120 dias': '#ef4444' # Vermelho
-        }
+        # Cores para cada aging (rampa Gótica Vitoriana, definida em tema.py)
+        aging_colors = tema.aging
         
         fig_donut = px.pie(
             aging_counts,
@@ -796,16 +674,16 @@ if ativo("cockpit"):
         fig_donut.update_traces(
             textposition='inside',
             textinfo='percent+label',
-            marker=dict(line=dict(color='#0f172a', width=2))
+            marker=dict(line=dict(color=tema.card, width=2))
         )
         fig_donut.update_layout(
-            template='plotly_dark',
+            template=template_plotly(tema),
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             showlegend=False,
             margin=dict(l=0, r=0, t=10, b=10)
         )
-        st.plotly_chart(fig_donut, width='stretch')
+        _plot(fig_donut, width='stretch')
 
     # Segunda Linha: Tipo de Material e Tipo de Suspensão
     col_mat, col_tipo = st.columns(2)
@@ -819,16 +697,16 @@ if ativo("cockpit"):
             orientation='h',
             text='CONTAGEM',
             color='MATERIAL',
-            color_discrete_sequence=['#6366f1', '#06b6d4', '#ec4899']
+            color_discrete_sequence=list(tema.colorway[:3])
         )
         fig_mat.update_layout(
-            template='plotly_dark',
+            template=template_plotly(tema),
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             showlegend=False,
             margin=dict(l=0, r=0, t=10, b=0)
         )
-        st.plotly_chart(fig_mat, width='stretch')
+        _plot(fig_mat, width='stretch')
 
     with col_tipo:
         st.markdown("#### 🔒 Severidade: Suspensão Parcial vs. Total")
@@ -840,16 +718,16 @@ if ativo("cockpit"):
             orientation='h',
             text='CONTAGEM',
             color='TP_SUSPENSAO',
-            color_discrete_sequence=['#0ea5e9', '#ef4444']
+            color_discrete_sequence=list(tema.colorway[:2])
         )
         fig_tp.update_layout(
-            template='plotly_dark',
+            template=template_plotly(tema),
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             showlegend=False,
             margin=dict(l=0, r=0, t=10, b=0)
         )
-        st.plotly_chart(fig_tp, width='stretch')
+        _plot(fig_tp, width='stretch')
 
     # ================= 🚨 CENTRAL DE ALERTAS =================
     st.markdown("---")
@@ -863,8 +741,8 @@ if ativo("cockpit"):
 
     _cor_alerta = {"critico": "alert-critico", "atencao": "alert-atencao",
                    "positivo": "alert-positivo", "info": "alert-info"}
-    _cor_hex = {"critico": "#f43f5e", "atencao": "#f59e0b",
-                "positivo": "#10b981", "info": "#38bdf8"}
+    _cor_hex = {"critico": tema.alerta, "atencao": tema.acento,
+                "positivo": tema.positivo, "info": tema.texto_sec}
     _icone_alerta = {"critico": "🔴", "atencao": "🟠", "positivo": "🟢", "info": "🔵"}
     _rotulo_alerta = {"critico": "Crítico", "atencao": "Atenção",
                       "positivo": "Positivo", "info": "Informativo"}
@@ -909,22 +787,22 @@ if ativo("cockpit"):
             fig_tend = go.Figure()
             fig_tend.add_bar(
                 x=serie["REFERENCIA_LABEL"], y=serie["LINHAS"],
-                name="Linhas no mês", marker_color="#38bdf8",
+                name="Linhas no mês", marker_color=tema.acento,
                 text=serie["LINHAS"], textposition="outside",
             )
             fig_tend.add_scatter(
                 x=serie["REFERENCIA_LABEL"], y=serie["MM3"],
                 name="Média móvel (3 meses)", mode="lines+markers",
-                line=dict(color="#f59e0b", width=3, dash="dot"),
+                line=dict(color=tema.acento, width=3, dash="dot"),
             )
             fig_tend.update_layout(
-                template='plotly_dark', paper_bgcolor='rgba(0,0,0,0)',
+                template=template_plotly(tema), paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)', height=380,
                 margin=dict(l=0, r=0, t=30, b=0),
                 legend=dict(orientation="h", yanchor="bottom", y=1.02),
                 yaxis_title="Linhas suspensas",
             )
-            st.plotly_chart(fig_tend, width='stretch')
+            _plot(fig_tend, width='stretch')
 
         with col_tab:
             tabela_tend = serie[[
@@ -995,8 +873,8 @@ if ativo("aging"):
     r1, r2, r3, r4 = st.columns(4)
     with r1:
         st.markdown(f"""
-        <div class="metric-card" style="border-top: 4px solid #10b981;">
-            <div class="metric-label" style="color: #10b981;">🟢 Janela de Ouro (0-30d)</div>
+        <div class="metric-card" style="border-top: 4px solid {COR_POSITIVO};">
+            <div class="metric-label" style="color: {COR_POSITIVO};">🟢 Janela de Ouro (0-30d)</div>
             <div class="metric-value">{q_ouro:,}</div>
             <div class="metric-delta delta-neutral">Alta recuperabilidade</div>
         </div>
@@ -1004,8 +882,8 @@ if ativo("aging"):
         
     with r2:
         st.markdown(f"""
-        <div class="metric-card" style="border-top: 4px solid #38bdf8;">
-            <div class="metric-label" style="color: #38bdf8;">🟡 Atenção (31-60d)</div>
+        <div class="metric-card" style="border-top: 4px solid {COR_ACENTO};">
+            <div class="metric-label" style="color: {COR_ACENTO};">🟡 Atenção (31-60d)</div>
             <div class="metric-value">{q_medio:,}</div>
             <div class="metric-delta delta-neutral">Risco moderado de churn</div>
         </div>
@@ -1013,8 +891,8 @@ if ativo("aging"):
         
     with r3:
         st.markdown(f"""
-        <div class="metric-card" style="border-top: 4px solid #f59e0b;">
-            <div class="metric-label" style="color: #f59e0b;">🔴 Risco Crítico (61-90d)</div>
+        <div class="metric-card" style="border-top: 4px solid {COR_ACENTO};">
+            <div class="metric-label" style="color: {COR_ACENTO};">🔴 Risco Crítico (61-90d)</div>
             <div class="metric-value">{q_alto:,}</div>
             <div class="metric-delta delta-positive">Última janela de quitação</div>
         </div>
@@ -1022,8 +900,8 @@ if ativo("aging"):
         
     with r4:
         st.markdown(f"""
-        <div class="metric-card" style="border-top: 4px solid #ef4444;">
-            <div class="metric-label" style="color: #ef4444;">🟣 Pré-Desconexão (>90d)</div>
+        <div class="metric-card" style="border-top: 4px solid {COR_ALERTA};">
+            <div class="metric-label" style="color: {COR_ALERTA};">🟣 Pré-Desconexão (>90d)</div>
             <div class="metric-value">{q_extremo:,}</div>
             <div class="metric-delta delta-positive">Cancelamento iminente</div>
         </div>
@@ -1042,38 +920,38 @@ if ativo("aging"):
         text='MRR_LABEL',
         color='FAIXA_RISCO',
         color_discrete_map={
-            'Baixo (Janela de Ouro)': '#10b981',
-            'Médio (Atenção)': '#38bdf8',
-            'Alto (Risco Crítico)': '#f59e0b',
-            'Extremo (Pré-Desconexão)': '#ef4444'
+            'Baixo (Janela de Ouro)': tema.faixas['Baixo (Janela de Ouro)'],
+            'Médio (Atenção)': tema.faixas['Médio (Atenção)'],
+            'Alto (Risco Crítico)': tema.faixas['Alto (Risco Crítico)'],
+            'Extremo (Pré-Desconexão)': tema.faixas['Extremo (Pré-Desconexão)']
         },
         labels={'FAIXA_RISCO': 'Faixa de Aging', 'MRR_RISCO': 'MRR em Risco (R$)'}
     )
     fig_mrr.update_layout(
-        template='plotly_dark',
+        template=template_plotly(tema),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         showlegend=False,
         margin=dict(l=0, r=0, t=10, b=0)
     )
-    st.plotly_chart(fig_mrr, width='stretch')
+    _plot(fig_mrr, width='stretch')
 
     mrr_recup_ouro = faixa_fin.loc[faixa_fin['FAIXA_RISCO'] == 'Baixo (Janela de Ouro)', 'MRR_RISCO'].sum()
     f1, f2 = st.columns(2)
     with f1:
         st.markdown(f"""
-        <div class="metric-card" style="border-left: 4px solid #10b981;">
+        <div class="metric-card" style="border-left: 4px solid {COR_POSITIVO};">
             <div class="metric-label">Dinheiro Recuperável na Janela de Ouro</div>
-            <div class="metric-value" style="color: #10b981; font-size: 26px;">{fmt_brl(mrr_recup_ouro)}</div>
+            <div class="metric-value" style="color: {COR_POSITIVO}; font-size: 26px;">{fmt_brl(mrr_recup_ouro)}</div>
             <div class="metric-delta delta-neutral">Faixa 0-30d · maior taxa de reversão (&gt;70%)</div>
         </div>
         """, unsafe_allow_html=True)
     with f2:
         mrr_pre_desconexao = faixa_fin.loc[faixa_fin['FAIXA_RISCO'].isin(['Alto (Risco Crítico)', 'Extremo (Pré-Desconexão)']), 'MRR_RISCO'].sum()
         st.markdown(f"""
-        <div class="metric-card" style="border-left: 4px solid #ef4444;">
+        <div class="metric-card" style="border-left: 4px solid {COR_ALERTA};">
             <div class="metric-label">MRR em Zona Irreversível (&gt;60d)</div>
-            <div class="metric-value" style="color: #ef4444; font-size: 26px;">{fmt_brl(mrr_pre_desconexao)}</div>
+            <div class="metric-value" style="color: {COR_ALERTA}; font-size: 26px;">{fmt_brl(mrr_pre_desconexao)}</div>
             <div class="metric-delta delta-positive">Risco de baixa definitiva pela operadora</div>
         </div>
         """, unsafe_allow_html=True)
@@ -1097,7 +975,7 @@ if ativo("aging"):
             cur_n = (df_filtered[df_filtered['REFERENCIA_LABEL'] == selected_ref]['FAIXA_RISCO'] == faixa).sum()
             feito = max(0, prev_n - cur_n)
             pct_realizado = (feito / prev_n * 100) if prev_n > 0 else 0
-            batida_class = "#10b981" if pct_realizado >= meta_pct else "#f59e0b"
+            batida_class = tema.positivo if pct_realizado >= meta_pct else tema.acento
             with cols_meta[i]:
                 st.markdown(
                     f"""
@@ -1122,10 +1000,10 @@ if ativo("aging"):
         color='FAIXA_RISCO',
         hover_data=['CLIENTE', 'NUMTELEFONE', 'UF', 'STATUS', 'DTPRIMEIRAATIVACAO'],
         color_discrete_map={
-            'Baixo (Janela de Ouro)': '#10b981',
-            'Médio (Atenção)': '#38bdf8',
-            'Alto (Risco Crítico)': '#f59e0b',
-            'Extremo (Pré-Desconexão)': '#ef4444'
+            'Baixo (Janela de Ouro)': tema.faixas['Baixo (Janela de Ouro)'],
+            'Médio (Atenção)': tema.faixas['Médio (Atenção)'],
+            'Alto (Risco Crítico)': tema.faixas['Alto (Risco Crítico)'],
+            'Extremo (Pré-Desconexão)': tema.faixas['Extremo (Pré-Desconexão)']
         },
         labels={
             'QT_DIAS': 'Idade da Linha desde a Ativação (Dias)',
@@ -1136,17 +1014,17 @@ if ativo("aging"):
     fig_scatter.add_hline(
         y=60,
         line_dash="dash",
-        line_color="#f59e0b",
+        line_color=tema.acento,
         annotation_text="Limiar de Risco Crítico (60 dias)",
         annotation_position="bottom right"
     )
     fig_scatter.update_layout(
-        template='plotly_dark',
+        template=template_plotly(tema),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         height=480
     )
-    st.plotly_chart(fig_scatter, width='stretch')
+    _plot(fig_scatter, width='stretch')
 
     # Tabela com as linhas mais críticas
     st.markdown("#### 🚨 Linhas com Maior Tempo em Suspensão (Ação Imediata Requerida)")
@@ -1179,7 +1057,7 @@ if ativo("aging"):
         # ---------- KPIs de qualidade do modelo ----------
         mc1, mc2, mc3, mc4 = st.columns(4)
         with mc1:
-            cor_auc = "#10b981" if (auc_cv or 0) >= 0.70 else ("#f59e0b" if (auc_cv or 0) >= 0.60 else "#f43f5e")
+            cor_auc = tema.positivo if (auc_cv or 0) >= 0.70 else (tema.acento if (auc_cv or 0) >= 0.60 else tema.alerta)
             st.markdown(f"""
             <div class="metric-card">
                 <div class="metric-label">Poder Discriminante (AUC)</div>
@@ -1199,7 +1077,7 @@ if ativo("aging"):
             st.markdown(f"""
             <div class="metric-card">
                 <div class="metric-label">Linhas Rotuladas</div>
-                <div class="metric-value" style="color: #38bdf8;">{met['n_rotulados']:,}</div>
+                <div class="metric-value" style="color: {COR_ACENTO};">{met['n_rotulados']:,}</div>
                 <div class="metric-delta delta-neutral">{met['n_features']} features · {met['iteracoes']} iterações</div>
             </div>
             """, unsafe_allow_html=True)
@@ -1207,7 +1085,7 @@ if ativo("aging"):
             st.markdown(f"""
             <div class="metric-card">
                 <div class="metric-label">Saídas Esperadas no Mês</div>
-                <div class="metric-value" style="color: #10b981;">≈ {saidas_esperadas:,.0f}</div>
+                <div class="metric-value" style="color: {COR_POSITIVO};">≈ {saidas_esperadas:,.0f}</div>
                 <div class="metric-delta delta-neutral">{taxa_esperada*100:.1f}% de {linhas_alvo:,} linhas</div>
             </div>
             """, unsafe_allow_html=True)
@@ -1295,15 +1173,15 @@ if ativo("aging"):
             fig_fatores = px.bar(
                 fatores.sort_values("PESO"),
                 x="PESO", y="FEATURE", orientation="h",
-                color="PESO", color_continuous_scale="RdBu_r",
+                color="PESO", color_continuous_scale=list(tema.rampa),
                 labels={"PESO": "Impacto na chance de saída", "FEATURE": ""},
             )
             fig_fatores.update_layout(
-                template='plotly_dark', paper_bgcolor='rgba(0,0,0,0)',
+                template=template_plotly(tema), paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)', showlegend=False, coloraxis_showscale=False,
                 margin=dict(l=0, r=10, t=10, b=0), height=300,
             )
-            st.plotly_chart(fig_fatores, width='stretch')
+            _plot(fig_fatores, width='stretch')
 
         with st.expander("📖 Como o modelo funciona e quais são os limites"):
             st.markdown(f"""
@@ -1364,17 +1242,17 @@ if ativo("contas"):
             x=top_15['CLIENTE'],
             y=top_15['TOTAL_LINHAS'],
             name='Linhas Suspensas',
-            marker_color='#38bdf8'
+            marker_color=tema.acento
         ))
         fig_pareto.add_trace(go.Scatter(
             x=top_15['CLIENTE'],
             y=top_15['PCT_ACUMULADO'],
             name='% Acumulado',
             yaxis='y2',
-            line=dict(color='#f43f5e', width=3)
+            line=dict(color=tema.alerta, width=3)
         ))
         fig_pareto.update_layout(
-            template='plotly_dark',
+            template=template_plotly(tema),
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             yaxis=dict(title='Quantidade de Linhas'),
@@ -1383,7 +1261,7 @@ if ativo("contas"):
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
             margin=dict(l=0, r=0, t=20, b=50)
         )
-        st.plotly_chart(fig_pareto, width='stretch')
+        _plot(fig_pareto, width='stretch')
 
     with col_top:
         st.markdown("#### 🏆 Top 10 Clientes com Maior Volume")
@@ -1394,16 +1272,16 @@ if ativo("contas"):
             orientation='h',
             text='TOTAL_LINHAS',
             color='TEMPO_MEDIO_SUSPENSO',
-            color_continuous_scale='Reds',
+            color_continuous_scale=list(tema.rampa),
             labels={'TOTAL_LINHAS': 'Qtd Linhas', 'TEMPO_MEDIO_SUSPENSO': 'Média Dias Suspenso'}
         )
         fig_top_bar.update_layout(
-            template='plotly_dark',
+            template=template_plotly(tema),
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             margin=dict(l=0, r=0, t=10, b=0)
         )
-        st.plotly_chart(fig_top_bar, width='stretch')
+        _plot(fig_top_bar, width='stretch')
 
     # Drill-down detalhado por cliente (fragment — Fase 2)
     st.markdown("---")
@@ -1430,16 +1308,16 @@ if ativo("geo"):
             y='TOTAL_LINHAS',
             text='TOTAL_LINHAS',
             color='TOTAL_LINHAS',
-            color_continuous_scale='Blues',
+            color_continuous_scale=list(tema.rampa),
             labels={'TOTAL_LINHAS': 'Linhas Suspensas', 'UF': 'Estado'}
         )
         fig_uf.update_layout(
-            template='plotly_dark',
+            template=template_plotly(tema),
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             margin=dict(l=0, r=0, t=10, b=0)
         )
-        st.plotly_chart(fig_uf, width='stretch')
+        _plot(fig_uf, width='stretch')
 
     with col_geo2:
         st.markdown("#### 📞 Distribuição por Código de Área (DDD)")
@@ -1450,17 +1328,17 @@ if ativo("geo"):
             values='CONTAGEM',
             names='DDD',
             hole=0.45,
-            color_discrete_sequence=px.colors.sequential.Teal
+            color_discrete_sequence=list(tema.colorway)
         )
         fig_ddd.update_traces(textposition='inside', textinfo='percent+label')
         fig_ddd.update_layout(
-            template='plotly_dark',
+            template=template_plotly(tema),
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             showlegend=False,
             margin=dict(l=0, r=0, t=10, b=0)
         )
-        st.plotly_chart(fig_ddd, width='stretch')
+        _plot(fig_ddd, width='stretch')
 
     # Tabela Regional
     st.markdown("#### 📋 Detalhamento Territorial Consolidado")
@@ -1495,7 +1373,7 @@ if ativo("regua"):
         st.markdown("#### 📕 Relatório de Diretoria (PDF)")
         st.caption("Compila KPIs, MRR em risco, aging e Top clientes do recorte atual em 1 página.")
         try:
-            dados_pdf = ad.pdf_do_recorte(df_filtered, ticket_medio, selected_ref)
+            dados_pdf = ad.pdf_do_recorte(df_filtered, ticket_medio, selected_ref, tema.nome)
             st.download_button(
                 label="📕 Baixar Relatório Executivo (PDF)",
                 data=dados_pdf,
@@ -1507,8 +1385,8 @@ if ativo("regua"):
             log.exception("Falha ao gerar o relatório PDF: %s", pdf_err)
             st.warning(f"Não foi possível gerar o PDF. Instale o reportlab com `pip install reportlab`.\n\nDetalhe: {pdf_err}")
         
-        st.markdown("""
-        <div style="margin-top: 25px; padding: 15px; border-radius: 10px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2); font-size: 12px; color: #94a3b8;">
+        st.markdown(f"""
+        <div style="margin-top: 25px; padding: 15px; border-radius: 10px; background: {COR_BORDA}; border: 1px solid {COR_BORDA}; font-size: 12px; color: {COR_TEXTO_SEC};">
             <b>💡 Dica de Operação:</b><br>
             Clientes na faixa <i>Janela de Ouro (Até 30 dias)</i> apresentam taxa de reversão superior a 70% quando contatados nas primeiras 72 horas após a suspensão parcial.
         </div>
@@ -1540,7 +1418,7 @@ if ativo("rastreador"):
         st.markdown(f"""
         <div class="metric-card">
             <div class="metric-label">Ações Registradas</div>
-            <div class="metric-value" style="color: #38bdf8;">{kpis_rec['total_acoes']:,}</div>
+            <div class="metric-value" style="color: {COR_ACENTO};">{kpis_rec['total_acoes']:,}</div>
             <div class="metric-delta delta-neutral">{kpis_rec['linhas_acionadas']:,} linhas acionadas</div>
         </div>
         """, unsafe_allow_html=True)
@@ -1548,7 +1426,7 @@ if ativo("rastreador"):
         st.markdown(f"""
         <div class="metric-card">
             <div class="metric-label">Taxa de Conversão</div>
-            <div class="metric-value" style="color: #10b981;">{kpis_rec['taxa_conversao']:.1f}%</div>
+            <div class="metric-value" style="color: {COR_POSITIVO};">{kpis_rec['taxa_conversao']:.1f}%</div>
             <div class="metric-delta delta-neutral">{kpis_rec['linhas_recuperadas']:,} linhas recuperadas</div>
         </div>
         """, unsafe_allow_html=True)
@@ -1557,13 +1435,13 @@ if ativo("rastreador"):
         st.markdown(f"""
         <div class="metric-card">
             <div class="metric-label">1º Contato (médio)</div>
-            <div class="metric-value" style="color: #a855f7;">{valor_tempo}</div>
+            <div class="metric-value" style="color: {COR_PERIGO};">{valor_tempo}</div>
             <div class="metric-delta delta-neutral">após a suspensão</div>
         </div>
         """, unsafe_allow_html=True)
     with rc4:
         valor_sla = f"{aderencia:.0f}%" if aderencia is not None else "—"
-        cor_sla = "#10b981" if (aderencia or 0) >= 80 else "#f59e0b"
+        cor_sla = tema.positivo if (aderencia or 0) >= 80 else tema.acento
         st.markdown(f"""
         <div class="metric-card">
             <div class="metric-label">Aderência ao SLA</div>
@@ -1576,7 +1454,7 @@ if ativo("rastreador"):
         st.markdown(f"""
         <div class="metric-card">
             <div class="metric-label">MRR Recuperado</div>
-            <div class="metric-value" style="color: #10b981;">{fmt_brl(kpis_rec['mrr_recuperado'])}</div>
+            <div class="metric-value" style="color: {COR_POSITIVO};">{fmt_brl(kpis_rec['mrr_recuperado'])}</div>
             <div class="metric-delta delta-neutral">{fmt_brl(mrr_recuperado_ano)}/ano*</div>
         </div>
         """, unsafe_allow_html=True)
@@ -1606,28 +1484,28 @@ if ativo("rastreador"):
             canal_df = rt.acoes_por(acoes, "CANAL")
             fig_canal = px.bar(
                 canal_df.sort_values("ACOES"), x="ACOES", y="CANAL", orientation="h",
-                text="ACOES", color="ACOES", color_continuous_scale="Blugrn",
+                text="ACOES", color="ACOES", color_continuous_scale=list(tema.rampa),
             )
             fig_canal.update_traces(textposition="outside")
             fig_canal.update_layout(
-                template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)",
+                template=template_plotly(tema), paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)", showlegend=False, coloraxis_showscale=False,
                 margin=dict(l=0, r=10, t=10, b=0), height=230,
             )
-            st.plotly_chart(fig_canal, width='stretch')
+            _plot(fig_canal, width='stretch')
 
             st.markdown("#### 🎯 Resultado dos Contatos")
             res_df = rt.acoes_por(acoes, "RESULTADO")
             fig_res = px.pie(
                 res_df, values="ACOES", names="RESULTADO", hole=0.5,
-                color_discrete_sequence=px.colors.qualitative.Set2,
+                color_discrete_sequence=list(tema.colorway),
             )
             fig_res.update_traces(textposition="inside", textinfo="percent+label")
             fig_res.update_layout(
-                template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)",
+                template=template_plotly(tema), paper_bgcolor="rgba(0,0,0,0)",
                 showlegend=False, margin=dict(l=0, r=0, t=10, b=0), height=250,
             )
-            st.plotly_chart(fig_res, width='stretch')
+            _plot(fig_res, width='stretch')
         else:
             st.markdown("#### 📊 Análise das Ações")
             st.caption("Os gráficos de canal e resultado aparecem após o primeiro registro.")
@@ -1642,12 +1520,12 @@ if ativo("rastreador"):
             sem = rt.acoes_por_semana(acoes)
             if not sem.empty:
                 fig_ev = px.area(sem, x="SEMANA", y="ACOES", markers=True,
-                                 color_discrete_sequence=["#38bdf8"])
+                                 color_discrete_sequence=[tema.acento])
                 fig_ev.update_layout(
-                    template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)",
+                    template=template_plotly(tema), paper_bgcolor="rgba(0,0,0,0)",
                     plot_bgcolor="rgba(0,0,0,0)", margin=dict(l=0, r=0, t=10, b=0), height=280,
                 )
-                st.plotly_chart(fig_ev, width='stretch')
+                _plot(fig_ev, width='stretch')
 
         with col_sla:
             st.markdown("#### ⏱️ SLA de Primeiro Contato por Faixa de Risco")
@@ -1678,16 +1556,16 @@ if ativo("rastreador"):
         with col_gr:
             fig_rec = px.bar(
                 rec_obs, x="REFERENCIA_LABEL", y="TAXA_SAIDA_%", text="TAXA_SAIDA_%",
-                color="TAXA_SAIDA_%", color_continuous_scale="Bluyl",
+                color="TAXA_SAIDA_%", color_continuous_scale=list(tema.rampa),
                 labels={"TAXA_SAIDA_%": "Taxa de saída (%)", "REFERENCIA_LABEL": "Mês"},
             )
             fig_rec.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
             fig_rec.update_layout(
-                template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)",
+                template=template_plotly(tema), paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)", showlegend=False, coloraxis_showscale=False,
                 margin=dict(l=0, r=0, t=10, b=0), height=300,
             )
-            st.plotly_chart(fig_rec, width='stretch')
+            _plot(fig_rec, width='stretch')
 
     # ---------- Histórico completo ----------
     if not acoes.empty:
