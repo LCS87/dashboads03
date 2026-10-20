@@ -18,11 +18,18 @@ env/
 .coverage
 htmlcov/
 
-# ===== Planos e Análises (locais) =====
-PLANO_DE_ACAO_E_STATUS.md
-ANALISE_E_PLANO_DE_MELHORIAS.md
+# ===== Dados (nunca versionar) =====
+# Arquivos de dados brutos e tratados - nunca subir ao GitHub
+parquesuspenso-janeiro a maio.csv
+parquesuspenso-janeiro a maio LIMPO.csv
+parquesuspenso-janeiro a maio.csv.bak
+parque_suspenso_tratado.parquet
+parque_suspenso_tratado.csv
+ParqueSuspenso_*.csv
+*.csv$
+*.parquet$
 
-# ===== Logs e artefatos gerados =====
+# ===== Seguran�a / Segredos =====
 logs/
 *.log
 relatorio_teste.*

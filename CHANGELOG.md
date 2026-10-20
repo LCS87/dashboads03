@@ -5,6 +5,44 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ## [Não publicado]
 
+### Documentação — README reescrito (Metodologia, Limitações e Cronograma)
+- `README.md` reescrito e ampliado (12 KB → ~80 KB, 1.330 linhas), passando a ser a
+  **documentação central completa** do projeto, com 17 seções e sumário navegável.
+- **Seção 3 — Metodologia** (nova): fluxo metodológico ponta a ponta, 12 etapas do ETL,
+  deduplicação, enriquecimento, auditoria da base, a técnica de *assinatura temporal*
+  que detectou a extração de Abr/2026, anonimização, **definições formais** de cada
+  indicador, metodologia completa do modelo preditivo (rótulo, features, Newton-Raphson,
+  calibração, protocolo de validação e leitura correta das métricas), metodologia das
+  9 regras de alerta e do Rastreador, reprodutibilidade e governança da mudança.
+- **Seção 8 — Limitações** (nova): 40+ limitações catalogadas em 6 famílias (dados,
+  metodologia, modelo, medição/negócio, operação/engenharia, segurança/privacidade),
+  cada uma com impacto e controle de mitigação; inclui a seção **"O que este projeto
+  não afirma"**, para evitar leitura equivocada em comitês, e um resumo por criticidade.
+- **Seção 9 — Riscos e Mitigações** (nova): 10 riscos com probabilidade, impacto,
+  mitigação e responsável.
+- **Seção 11 — Cronograma** (nova): linha do tempo das 13 rodadas concluídas com
+  evidência de aceite, diagrama de Gantt, roadmap por horizonte (Q4/2026 · Q1/2027 ·
+  Q2/2027), cronograma datado das próximas 11 entregas (S0–S10) com área, dependência
+  e critério de aceite, diagrama de *gates* de decisão e riscos de cronograma.
+- **Seção 2 — Status Atual** reescrita com **todos os números verificados
+  programaticamente** contra a base tratada: 2.061 linhas, 821 clientes (850 CNPJ),
+  15 UFs, 131 testes, AUC 0,571 (CV) / 0,654 (holdout), lift 1,58×.
+- **Correção de inconsistência**: o README anterior atribuía o número **821** a
+  "clientes (CNPJ)"; os 821 são **razões sociais** — há **850 CNPJ distintos**. A
+  distinção foi explicitada e propagada para os demais documentos do projeto.
+- Novas seções: Visão Geral (problema, objetivos, escopo e glossário), Arquitetura
+  (contrato entre módulos e decisões de projeto), Testes e Qualidade (inclui comando
+  de verificação de dados reproduzível), Segurança e Privacidade.
+- **10 capturas reais** do dashboard (`assets/img01..img10`) incorporadas aos painéis
+  correspondentes, com legendas explicativas do que cada tela mostra.
+- **Galeria de preview no topo do README** (tabela HTML com 6 telas principais em
+  tamanho reduzido) e reorganização da Seção 7, que agora traz as 10 telas em tamanho
+  real — as duas capturas que faltavam (`img02` — visão geral do cockpit com navegação
+  e filtros; `img08` — ranking das linhas mais antigas e cartões de AUC do modelo)
+  foram efetivamente adicionadas, chegando a **100% das capturas utilizadas**.
+- Sumário com âncoras HTML explícitas (`sec-N`, `preview`), para navegação estável
+  apesar dos emojis nos títulos.
+
 ### Adicionado — Central de Alertas & Tendências
 - `alertas.py`: motor de **9 regras auditáveis** (pico de volume, queda, alta
   consecutiva, criticidade alta/sob controle, concentração em top-5 clientes,
